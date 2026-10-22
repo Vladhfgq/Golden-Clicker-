@@ -1,0 +1,1164 @@
+/* =============================================================================
+   BIOMES.CSS
+   High-fantasy ornate frame architecture, backgrounds, and crystal/particle
+   effects for every biome stage. Loaded after style.css, so its selectors
+   (all scoped under body.biome-*) override the neutral Stage 1 defaults
+   without needing !important.
+
+   Applies to: .stats-panel, #click-button (+ .click-button-frame),
+   .shop-panel, .upgrade-item (shop items), .modal-window, .depth-modal,
+   .daily-day-card, and page backgrounds.
+
+   Stage map:
+     (none)            Surface Mine     — neutral, defined in style.css
+     .biome-slateiron  Slate & Iron     — riveted iron plating
+     .biome-grotto     Bioluminescent   — living root/spore growth
+     .biome-mithril    Mithril Depths   — cyan crystal shards
+     .biome-magma      Magma Core       — volcanic obsidian + fire cracks
+     .biome-voidrift   Void Rift        — cosmic crystalline shards
+     .biome-celestial  Celestial Core   — golden divine scrollwork
+   ============================================================================= */
+
+
+/* =============================================================================
+   SHARED SCAFFOLDING
+   Structural rules every biome relies on: layered pseudo-elements for
+   backgrounds/particles behind panel content, and sizing for the ornate
+   corner pieces so per-biome art can be swapped in via background-image.
+   ============================================================================= */
+
+.stats-panel,
+.shop-panel,
+.modal-window,
+.depth-modal,
+.upgrade-item,
+.daily-day-card {
+    isolation: isolate;
+}
+
+/* Ambient particle layer, fixed behind all content — one per biome */
+.biome-particle-field {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.biome-particle-field span {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+}
+
+/* Generic ornate-corner sizing upgrade (base .frame-corner sizing lives in
+   style.css; biomes below replace border treatment with imagery/shapes) */
+.frame-corner {
+    width: 26px;
+    height: 26px;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+}
+.daily-day-card .frame-corner,
+.upgrade-item .frame-corner {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* =============================================================================
+   STAGE 1 — SURFACE MINE (no biome class)
+   Kept intentionally plain; establishes the "before" state so later biomes
+   read as a dramatic upgrade. No rules needed here beyond style.css defaults.
+   ============================================================================= */
+
+
+/* =============================================================================
+   STAGE 2 — SLATE & IRON CAVERNS
+   Riveted iron plating: bolted corner plates, chamfered edges, brushed-metal
+   sheen banding across panels.
+   ============================================================================= */
+body.biome-slateiron {
+    --frame-accent: #b7c3cc;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 50% -10%, rgba(199, 209, 219, 0.08), transparent 60%),
+        repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 26px),
+        linear-gradient(180deg, #15181b, #1a1d21 40%, #101214);
+}
+
+body.biome-slateiron .stats-panel,
+body.biome-slateiron .shop-panel,
+body.biome-slateiron .modal-window,
+body.biome-slateiron .depth-modal {
+    border: 3px solid #4a545c;
+    border-radius: 6px;
+    background-image:
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 10px),
+        linear-gradient(160deg, #23272c, #1a1d21);
+    box-shadow:
+        inset 0 0 0 2px #2a2f34,
+        inset 0 2px 3px rgba(255,255,255,0.08),
+        0 4px 15px rgba(0,0,0,0.4);
+}
+
+/* Bolted corner plates — replace the thin border-corner with a riveted square */
+body.biome-slateiron .frame-corner {
+    width: 22px;
+    height: 22px;
+    border: none !important;
+    background: linear-gradient(135deg, #8b98a1, #4a545c 55%, #2a2f34);
+    box-shadow: inset 0 0 0 1px #1a1d21, 0 1px 3px rgba(0,0,0,0.6);
+}
+body.biome-slateiron .frame-corner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #eef2f5, #7b868f 60%, #33383d);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.6);
+}
+body.biome-slateiron .frame-corner.top-left     { top: -4px; left: -4px; clip-path: polygon(0 0, 100% 0, 100% 30%, 30% 30%, 30% 100%, 0 100%); }
+body.biome-slateiron .frame-corner.top-right    { top: -4px; right: -4px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 70% 30%, 0 30%); }
+body.biome-slateiron .frame-corner.bottom-left  { bottom: -4px; left: -4px; clip-path: polygon(0 0, 30% 0, 30% 70%, 100% 70%, 100% 100%, 0 100%); }
+body.biome-slateiron .frame-corner.bottom-right { bottom: -4px; right: -4px; clip-path: polygon(70% 0, 100% 0, 100% 100%, 0 100%, 0 70%, 70% 70%); }
+
+body.biome-slateiron .daily-day-card .frame-corner,
+body.biome-slateiron .upgrade-item .frame-corner { width: 12px; height: 12px; }
+body.biome-slateiron .daily-day-card .frame-corner::after,
+body.biome-slateiron .upgrade-item .frame-corner::after { width: 4px; height: 4px; }
+
+body.biome-slateiron .upgrade-item {
+    border: 2px solid #4a545c;
+    border-radius: 4px;
+    background-image:
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 12px),
+        var(--surface-color);
+    box-shadow: inset 0 0 0 1px #2a2f34, inset 0 2px 3px rgba(255,255,255,0.06);
+}
+body.biome-slateiron .upgrade-item:hover:not(.disabled) {
+    box-shadow: inset 0 0 0 1px #7b868f, 0 0 14px rgba(199,209,219,0.3);
+}
+
+/* Riveted seam running along the top edge of the shop panel */
+body.biome-slateiron .shop-panel::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 16px;
+    right: 16px;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, #6b767e 0 10px, transparent 10px 22px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* -----------------------------------------------------------------------
+   Heavy metallic iron-plate click button: brushed steel plate, polished
+   convex dome center, and a ring of riveted bolts around the border.
+   ----------------------------------------------------------------------- */
+body.biome-slateiron #click-button {
+    border-radius: 50%;
+    border: 6px solid #3a3f44;
+    outline: 3px solid rgba(0, 0, 0, 0.5);
+    outline-offset: -5px;
+    background:
+        radial-gradient(circle at 35% 28%, #f4f7f9 0%, #d4dce1 10%, #9aa7ae 32%, #6b767e 55%, #454e54 78%, #262b2e 100%),
+        repeating-conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg 2deg, transparent 2deg 6deg);
+    box-shadow:
+        inset 0 8px 14px rgba(255,255,255,0.55),
+        inset 0 -12px 20px rgba(0,0,0,0.55),
+        inset 0 0 0 3px #212528,
+        0 8px 0 #23272a,
+        0 12px 22px rgba(0,0,0,0.55),
+        0 0 20px 2px rgba(180,195,205,0.15);
+    color: #1c1f22;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+}
+/* Polished convex steel dome at the center */
+body.biome-slateiron #click-button::before {
+    content: '';
+    position: absolute;
+    inset: 26px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 30%, #ffffff 0%, #e4ebef 14%, #b7c3cc 40%, #7c8991 68%, #4a545c 100%);
+    box-shadow:
+        inset 0 4px 8px rgba(255,255,255,0.7),
+        inset 0 -6px 12px rgba(0,0,0,0.5),
+        0 2px 4px rgba(0,0,0,0.4);
+    pointer-events: none;
+}
+/* Ring of polished steel rivets set into the outer plate border */
+body.biome-slateiron #click-button::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle 5px at 50% 4%,  #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 50% 96%, #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 4% 50%,  #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 96% 50%, #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 15% 15%, #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 85% 15%, #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 15% 85%, #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%),
+        radial-gradient(circle 5px at 85% 85%, #eef2f5 0%, #7b868f 55%, #33383d 75%, transparent 76%);
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.6));
+}
+body.biome-slateiron #click-button span.click-label,
+body.biome-slateiron #click-button {
+    z-index: 1;
+}
+body.biome-slateiron #click-button:hover {
+    box-shadow:
+        inset 0 8px 14px rgba(255,255,255,0.6),
+        inset 0 -12px 20px rgba(0,0,0,0.5),
+        inset 0 0 0 3px #212528,
+        0 8px 0 #23272a,
+        0 12px 22px rgba(0,0,0,0.55),
+        0 0 26px 6px rgba(180,195,205,0.35);
+}
+body.biome-slateiron .click-button-frame::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(#5c666d 0deg 4deg, #3a3f44 4deg 8deg);
+    z-index: -1;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+
+/* =============================================================================
+   STAGE 3 — BIOLUMINESCENT GROTTO
+   Living cavern growth: root tendrils curling from corners, glowing spore
+   clusters, organic asymmetric panel silhouettes.
+   ============================================================================= */
+body.biome-grotto {
+    --frame-accent: #57ffa0;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 15% 20%, rgba(57,255,138,0.10), transparent 35%),
+        radial-gradient(circle at 85% 75%, rgba(150,90,255,0.10), transparent 35%),
+        radial-gradient(circle at 50% -10%, rgba(57,255,138,0.12), transparent 60%),
+        linear-gradient(180deg, #150a24, #1f1033 45%, #0f0718);
+}
+
+@keyframes sporeDrift {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(-90vh) translateX(20px); opacity: 0; }
+}
+body.biome-grotto .biome-particle-field span {
+    width: 4px; height: 4px;
+    background: radial-gradient(circle, #b8ffd6, #39ff8a 60%, transparent 75%);
+    box-shadow: 0 0 6px 2px rgba(57,255,138,0.7);
+    animation: sporeDrift 9s linear infinite;
+}
+
+body.biome-grotto .stats-panel,
+body.biome-grotto .shop-panel,
+body.biome-grotto .modal-window,
+body.biome-grotto .depth-modal {
+    border: 2px solid #2f7a52;
+    border-radius: 38px 20px 34px 22px / 26px 34px 20px 30px;
+    background:
+        radial-gradient(circle at 12% 8%, rgba(57,255,138,0.08), transparent 40%),
+        linear-gradient(160deg, #1f1033, #150a24);
+    box-shadow:
+        inset 0 0 24px rgba(57,255,138,0.08),
+        0 0 18px rgba(57,255,138,0.15);
+}
+
+/* Root tendril corners — curling organic vine shapes instead of hard corners */
+body.biome-grotto .frame-corner {
+    border: none !important;
+    width: 30px;
+    height: 30px;
+    background: none;
+}
+body.biome-grotto .frame-corner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 100% 100%, transparent 60%, rgba(57,255,138,0.9) 61%, rgba(57,255,138,0.9) 64%, transparent 65%);
+    filter: drop-shadow(0 0 4px #39ff8a);
+}
+body.biome-grotto .frame-corner::after {
+    content: '';
+    position: absolute;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #d9ffe9, #39ff8a 70%);
+    box-shadow: 0 0 6px 2px rgba(57,255,138,0.8);
+    animation: grottoSporePulse 2.4s ease-in-out infinite;
+}
+body.biome-grotto .frame-corner.top-left     { top: -6px; left: -6px; }
+body.biome-grotto .frame-corner.top-left::after { bottom: 2px; right: 2px; }
+body.biome-grotto .frame-corner.top-right    { top: -6px; right: -6px; transform: scaleX(-1); }
+body.biome-grotto .frame-corner.top-right::after { bottom: 2px; right: 2px; }
+body.biome-grotto .frame-corner.bottom-left  { bottom: -6px; left: -6px; transform: scaleY(-1); }
+body.biome-grotto .frame-corner.bottom-left::after { bottom: 2px; right: 2px; }
+body.biome-grotto .frame-corner.bottom-right { bottom: -6px; right: -6px; transform: scale(-1); }
+body.biome-grotto .frame-corner.bottom-right::after { bottom: 2px; right: 2px; }
+@keyframes grottoSporePulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.4); }
+}
+
+body.biome-grotto .upgrade-item {
+    border: 2px dashed #2f7a52;
+    border-radius: 30px 14px 26px 16px / 18px 26px 14px 22px;
+    background: radial-gradient(circle at 15% 0%, rgba(57,255,138,0.06), transparent 50%), var(--surface-color);
+}
+body.biome-grotto .upgrade-item:hover:not(.disabled) {
+    box-shadow: 0 0 18px rgba(57,255,138,0.4), 0 0 30px rgba(150,90,255,0.2);
+}
+
+/* -----------------------------------------------------------------------
+   Glowing bioluminescent mushroom-cap click button: soft organic dome
+   with a cyan/green spore glow and a paler gill-ring underside highlight.
+   ----------------------------------------------------------------------- */
+body.biome-grotto #click-button {
+    border-radius: 50% 50% 46% 46% / 60% 60% 40% 40%;
+    border: 5px solid #1d5c3d;
+    outline: 3px solid rgba(6, 20, 12, 0.5);
+    outline-offset: -4px;
+    background:
+        radial-gradient(circle at 32% 26%, #e9fff2 0%, #b8ffd6 12%, #57ffa0 32%, #22c37a 55%, #0f7a4e 78%, #0a4530 100%);
+    box-shadow:
+        inset 0 8px 16px rgba(255,255,255,0.5),
+        inset 0 -14px 22px rgba(0,40,20,0.55),
+        0 8px 0 #123d28,
+        0 12px 22px rgba(0,0,0,0.5),
+        0 0 30px 8px rgba(57,255,138,0.45),
+        0 0 60px 16px rgba(150,90,255,0.2);
+    color: #06331f;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+    animation: grottoCapBreathe 3.4s ease-in-out infinite;
+}
+/* Soft luminous spore-cluster highlight near the cap crown */
+body.biome-grotto #click-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        radial-gradient(circle 20px at 30% 22%, rgba(255,255,255,0.75), transparent 70%),
+        radial-gradient(circle 34px at 70% 65%, rgba(184,255,214,0.35), transparent 75%);
+    mix-blend-mode: screen;
+}
+/* Speckled spore dots scattered across the cap surface */
+body.biome-grotto #click-button::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle 3px at 22% 40%, #d9ffe9, transparent 80%),
+        radial-gradient(circle 3px at 65% 28%, #d9ffe9, transparent 80%),
+        radial-gradient(circle 3px at 78% 55%, #d9ffe9, transparent 80%),
+        radial-gradient(circle 3px at 40% 68%, #d9ffe9, transparent 80%),
+        radial-gradient(circle 3px at 55% 45%, #d9ffe9, transparent 80%);
+    filter: drop-shadow(0 0 4px rgba(217,255,233,0.8));
+}
+@keyframes grottoCapBreathe {
+    0%, 100% { box-shadow: inset 0 8px 16px rgba(255,255,255,0.5), inset 0 -14px 22px rgba(0,40,20,0.55), 0 8px 0 #123d28, 0 12px 22px rgba(0,0,0,0.5), 0 0 30px 8px rgba(57,255,138,0.45), 0 0 60px 16px rgba(150,90,255,0.2); }
+    50%      { box-shadow: inset 0 8px 16px rgba(255,255,255,0.6), inset 0 -14px 22px rgba(0,40,20,0.5), 0 8px 0 #123d28, 0 12px 22px rgba(0,0,0,0.5), 0 0 42px 12px rgba(57,255,138,0.65), 0 0 80px 22px rgba(150,90,255,0.32); }
+}
+body.biome-grotto .click-button-frame::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(57,255,138,0.3), transparent 70%);
+    z-index: -1;
+    filter: blur(4px);
+}
+
+
+/* =============================================================================
+   STAGE 4 — MITHRIL DEPTHS
+   Glowing cyan crystal shards framing every panel; sharp geometric facets,
+   angular clip-paths, faceted corner gems.
+   ============================================================================= */
+body.biome-mithril {
+    --frame-accent: #6ff2ea;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 20% 10%, rgba(79,224,216,0.10), transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(79,224,216,0.08), transparent 35%),
+        radial-gradient(circle at 50% -10%, rgba(45,200,255,0.14), transparent 60%),
+        linear-gradient(180deg, #060d18, #0a1626 45%, #040910);
+}
+
+@keyframes mithrilGlint {
+    0%, 100% { opacity: 0.15; transform: translateY(0); }
+    50% { opacity: 0.9; transform: translateY(-6px); }
+}
+body.biome-mithril .biome-particle-field span {
+    width: 3px; height: 10px;
+    background: linear-gradient(180deg, #d2fffb, transparent);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    box-shadow: 0 0 6px 1px rgba(79,224,216,0.7);
+    animation: mithrilGlint 3.5s ease-in-out infinite;
+}
+
+body.biome-mithril .stats-panel,
+body.biome-mithril .shop-panel,
+body.biome-mithril .modal-window,
+body.biome-mithril .depth-modal {
+    border: 2px solid #4fe0d8;
+    border-radius: 16px;
+    background: linear-gradient(160deg, #16334a, #0f1f30 45%, #0a1626);
+    box-shadow:
+        inset 0 2px 4px rgba(210, 255, 251, 0.3),
+        inset 0 -6px 10px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(79,224,216,0.5),
+        0 0 24px rgba(79,224,216,0.35),
+        0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Faceted crystal-shard corners built from stacked clipped triangles */
+body.biome-mithril .frame-corner {
+    border: none !important;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #eafffd, #4fe0d8 50%, #0c2b28);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.7), inset 0 -2px 3px rgba(0,0,0,0.6);
+    filter: drop-shadow(0 0 5px #4fe0d8) drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+body.biome-mithril .frame-corner.top-left     { top: -3px; left: -3px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+body.biome-mithril .frame-corner.top-right    { top: -3px; right: -3px; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+body.biome-mithril .frame-corner.bottom-left  { bottom: -3px; left: -3px; clip-path: polygon(0 0, 100% 100%, 0 100%); }
+body.biome-mithril .frame-corner.bottom-right { bottom: -3px; right: -3px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+
+body.biome-mithril .daily-day-card .frame-corner,
+body.biome-mithril .upgrade-item .frame-corner { width: 16px; height: 16px; }
+
+body.biome-mithril .upgrade-item {
+    border: 2px solid #4fe0d8;
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(79,224,216,0.1), transparent 40%), var(--surface-color);
+    box-shadow:
+        inset 0 2px 3px rgba(210, 255, 251, 0.2),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.5),
+        inset 0 0 10px rgba(79,224,216,0.12);
+}
+body.biome-mithril .upgrade-item:hover:not(.disabled) {
+    box-shadow: inset 0 0 16px rgba(79,224,216,0.28), 0 0 18px rgba(79,224,216,0.4);
+}
+
+/* Crystal cluster jutting from the shop panel top edge */
+body.biome-mithril .shop-panel::before {
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 22px;
+    background: linear-gradient(180deg, #d2fffb, #4fe0d8 60%, transparent);
+    clip-path: polygon(50% 0%, 80% 40%, 65% 100%, 35% 100%, 20% 40%);
+    filter: drop-shadow(0 0 6px #4fe0d8);
+    pointer-events: none;
+}
+
+/* Glowing hexagonal crystal core click button, ringed by floating gem shards
+   (uses the .void-shard elements already present in the HTML). */
+body.biome-mithril #click-button {
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 35% 28%, #ffffff 0%, #eafffd 10%, #9df7f0 26%, #4fe0d8 52%, #1c5f5a 78%, #0a2624 100%);
+    border: 5px solid #0c2b28;
+    outline: 3px solid rgba(79, 224, 216, 0.4);
+    outline-offset: -6px;
+    box-shadow:
+        inset 0 8px 14px rgba(255,255,255,0.65),
+        inset 0 -12px 18px rgba(0,0,0,0.5),
+        0 8px 0 #0a2624,
+        0 12px 22px rgba(0,0,0,0.5),
+        0 0 24px 6px rgba(79,224,216,0.6),
+        0 0 55px 18px rgba(45,200,255,0.35);
+    animation: mithrilCorePulse 2.6s ease-in-out infinite;
+}
+/* Faceted crystal highlight lines, drawn as soft gradients on a round
+   dome rather than cut into the button's silhouette */
+body.biome-mithril #click-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    background:
+        conic-gradient(from 20deg,
+            rgba(255,255,255,0.35) 0deg, transparent 30deg,
+            transparent 90deg, rgba(255,255,255,0.2) 110deg,
+            transparent 150deg, transparent 210deg,
+            rgba(79,224,216,0.35) 230deg, transparent 260deg,
+            transparent 340deg, rgba(255,255,255,0.35) 360deg);
+    mix-blend-mode: screen;
+    opacity: 0.8;
+}
+body.biome-mithril #click-button::after {
+    content: '';
+    position: absolute;
+    inset: 16px;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: inset 0 6px 10px rgba(255,255,255,0.5), inset 0 -8px 14px rgba(0,0,0,0.35);
+}
+@keyframes mithrilCorePulse {
+    0%, 100% { box-shadow: 0 0 20px 6px rgba(79,224,216,0.6), 0 0 50px 16px rgba(45,200,255,0.35), inset 0 0 18px rgba(255,255,255,0.5); }
+    50%      { box-shadow: 0 0 32px 10px rgba(79,224,216,0.85), 0 0 70px 22px rgba(45,200,255,0.5), inset 0 0 26px rgba(255,255,255,0.7); }
+}
+
+/* Ring of orbiting gem shards using the shard spans baked into the HTML */
+body.biome-mithril .click-button-frame .void-shard {
+    opacity: 1;
+    width: 12px;
+    height: 22px;
+    background: linear-gradient(180deg, #eafffd, #4fe0d8 70%, transparent);
+    filter: drop-shadow(0 0 5px #4fe0d8);
+}
+body.biome-mithril .click-button-frame .shard-1 { top: -4px;  left: 50%;  transform: translateX(-50%); animation: mithrilShardOrbit 5s linear infinite; }
+body.biome-mithril .click-button-frame .shard-2 { bottom: -4px; left: 50%; transform: translateX(-50%) rotate(180deg); animation: mithrilShardOrbit 5s linear infinite reverse; }
+body.biome-mithril .click-button-frame .shard-3 { top: 50%; left: -4px;  transform: translateY(-50%) rotate(-90deg); animation: mithrilShardBob 3.4s ease-in-out infinite; }
+body.biome-mithril .click-button-frame .shard-4 { top: 50%; right: -4px; transform: translateY(-50%) rotate(90deg); animation: mithrilShardBob 3.8s ease-in-out infinite reverse; }
+@keyframes mithrilShardOrbit {
+    0%   { transform: translateX(-50%) rotate(0deg) translateY(-6px) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(360deg) translateY(-6px) rotate(-360deg); }
+}
+@keyframes mithrilShardBob {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(-4px); }
+}
+
+
+/* =============================================================================
+   STAGE 5 — MAGMA CORE
+   Jagged volcanic obsidian rock borders with fiery glowing magma cracks
+   running along the edges.
+   ============================================================================= */
+body.biome-magma {
+    --frame-accent: #ff8a50;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 25% 90%, rgba(255,90,30,0.14), transparent 40%),
+        radial-gradient(circle at 75% 10%, rgba(255,140,50,0.10), transparent 35%),
+        radial-gradient(circle at 50% -10%, rgba(255,90,30,0.18), transparent 60%),
+        linear-gradient(180deg, #0d0705, #170a08 45%, #0a0403);
+}
+
+@keyframes emberRise {
+    0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: translateY(-70vh) scale(1.1); opacity: 0; }
+}
+body.biome-magma .biome-particle-field span {
+    width: 3px; height: 3px;
+    background: radial-gradient(circle, #ffe0b0, #ff5a1e 60%, transparent 75%);
+    box-shadow: 0 0 8px 2px rgba(255,90,30,0.8);
+    animation: emberRise 4.5s ease-in infinite;
+}
+
+body.biome-magma .stats-panel,
+body.biome-magma .shop-panel,
+body.biome-magma .modal-window,
+body.biome-magma .depth-modal {
+    border: 2px solid #4a2013;
+    border-radius: 14px;
+    background:
+        repeating-linear-gradient(115deg, rgba(0,0,0,0.25) 0 3px, transparent 3px 14px),
+        linear-gradient(160deg, #2a160c, #1b0f08 45%, #120907);
+    box-shadow:
+        inset 0 2px 4px rgba(255, 150, 90, 0.18),
+        inset 0 -6px 10px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 87, 34, 0.35),
+        0 0 18px rgba(255,87,34,0.28),
+        0 8px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+/* Glowing molten seam traced just inside the panel edge, in place of the
+   old jagged clip-path silhouette — a clean rounded obsidian slab with
+   fire running along its border instead of through its shape. */
+body.biome-magma .stats-panel::before,
+body.biome-magma .shop-panel::before,
+body.biome-magma .modal-window::before,
+body.biome-magma .depth-modal::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 11px;
+    border: 1.5px solid rgba(255, 138, 80, 0.55);
+    box-shadow:
+        0 0 8px 1px rgba(255,111,0,0.45),
+        inset 0 0 8px 1px rgba(255,87,34,0.25);
+    pointer-events: none;
+    animation: magmaSeamGlow 3.6s ease-in-out infinite;
+}
+/* Soft drifting inner glow across the obsidian surface (no hard cracks) */
+body.biome-magma .stats-panel::after,
+body.biome-magma .shop-panel::after,
+body.biome-magma .modal-window::after,
+body.biome-magma .depth-modal::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 15% 110%, rgba(255,111,0,0.16), transparent 55%),
+        radial-gradient(circle at 100% -10%, rgba(255,171,64,0.10), transparent 55%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+@keyframes magmaSeamGlow {
+    0%, 100% { opacity: 0.65; box-shadow: 0 0 8px 1px rgba(255,111,0,0.45), inset 0 0 8px 1px rgba(255,87,34,0.25); }
+    50%      { opacity: 1;    box-shadow: 0 0 14px 3px rgba(255,111,0,0.7), inset 0 0 14px 2px rgba(255,87,34,0.4); }
+}
+
+/* Clean rounded ember corner brackets — same warm palette, no jagged
+   clip-path chips, sitting flush against the smooth panel radius. */
+body.biome-magma .frame-corner {
+    border: none !important;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #ff8a50, #b3401a 55%, #2a140c);
+    box-shadow: inset 0 0 0 1px #ff5722, inset 0 1px 2px rgba(255,200,150,0.5), inset 0 -2px 3px rgba(0,0,0,0.6);
+    filter: drop-shadow(0 0 4px rgba(255,87,34,0.7)) drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+body.biome-magma .frame-corner.top-left     { top: -3px; left: -3px; }
+body.biome-magma .frame-corner.top-right    { top: -3px; right: -3px; }
+body.biome-magma .frame-corner.bottom-left  { bottom: -3px; left: -3px; }
+body.biome-magma .frame-corner.bottom-right { bottom: -3px; right: -3px; }
+
+body.biome-magma .daily-day-card .frame-corner,
+body.biome-magma .upgrade-item .frame-corner { width: 14px; height: 14px; border-radius: 4px; }
+
+body.biome-magma .upgrade-item {
+    border: 1.5px solid #4a2013;
+    border-radius: 12px;
+    background:
+        repeating-linear-gradient(115deg, rgba(0,0,0,0.15) 0 2px, transparent 2px 10px),
+        var(--surface-color);
+    box-shadow:
+        inset 0 2px 3px rgba(255, 180, 130, 0.18),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255,87,34,0.2);
+}
+body.biome-magma .upgrade-item:hover:not(.disabled) {
+    box-shadow: 0 0 18px rgba(255,90,30,0.45), inset 0 0 10px rgba(255,90,30,0.18);
+}
+
+/* Smooth polished volcanic orb click button — no jagged mask, just a
+   rounded obsidian sphere with a rich, breathing lava-glow core. */
+body.biome-magma #click-button {
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 40% 32%, #ffe9a8 0%, #ffb74d 10%, #ff7043 28%, #d84315 50%, #5c2410 74%, #1e0d08 100%);
+    border: 5px solid #1e0d08;
+    outline: 3px solid rgba(255, 87, 34, 0.35);
+    outline-offset: -6px;
+    box-shadow:
+        inset 0 8px 14px rgba(255,205,120,0.5),
+        inset 0 -14px 20px rgba(0,0,0,0.6),
+        0 8px 0 #170a08,
+        0 12px 22px rgba(0,0,0,0.55),
+        0 0 30px 8px rgba(255,87,34,0.6),
+        0 0 60px 20px rgba(255,140,50,0.32);
+    animation: magmaCorePulse 2.2s ease-in-out infinite;
+}
+/* Molten crack veins rendered as soft glowing lines, not shape cutouts */
+body.biome-magma #click-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    background:
+        radial-gradient(circle 3px at 60% 70%, #fff3d6, transparent 80%),
+        linear-gradient(115deg, transparent 44%, rgba(255,214,140,0.55) 49%, transparent 54%),
+        linear-gradient(25deg, transparent 55%, rgba(255,111,0,0.45) 60%, transparent 66%);
+    mix-blend-mode: screen;
+    filter: blur(0.5px);
+}
+body.biome-magma #click-button::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: inset 0 6px 10px rgba(255,255,255,0.35), inset 0 -8px 14px rgba(0,0,0,0.4);
+}
+@keyframes magmaCorePulse {
+    0%, 100% { box-shadow: 0 0 26px 8px rgba(255,87,34,0.65), 0 0 55px 18px rgba(255,140,50,0.35), inset 0 0 22px rgba(255,171,64,0.6); }
+    50%      { box-shadow: 0 0 38px 12px rgba(255,87,34,0.9), 0 0 75px 24px rgba(255,140,50,0.5), inset 0 0 32px rgba(255,205,120,0.8); }
+}
+
+/* Ember halo behind the click button, replacing the void-shard slots */
+body.biome-magma .click-button-frame::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #ff5722, #ffab40, #ff5722, #d84315, #ff5722);
+    filter: blur(6px);
+    opacity: 0.55;
+    animation: biomeSlowSpin 6s linear infinite;
+    z-index: -1;
+}
+
+
+/* =============================================================================
+   STAGE 6 — VOID RIFT
+   Sharp crystalline/shard overlays sticking out from corners and sides.
+   The click button becomes a dark purple cosmic portal surrounded by
+   floating void shards (uses the .void-shard elements already in the HTML).
+   ============================================================================= */
+body.biome-voidrift {
+    --frame-accent: #c9a3ff;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(179,136,255,0.14), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(255,255,255,0.06), transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(94,53,177,0.16), transparent 45%),
+        linear-gradient(180deg, #0a0616, #140b26 45%, #06040d);
+}
+
+@keyframes voidDrift {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+    12%  { opacity: 0.9; }
+    88%  { opacity: 0.6; }
+    100% { transform: translateY(-80vh) translateX(-30px) rotate(180deg); opacity: 0; }
+}
+body.biome-voidrift .biome-particle-field span {
+    width: 6px; height: 12px;
+    background: linear-gradient(180deg, #e6d6ff, transparent);
+    clip-path: polygon(50% 0%, 100% 30%, 70% 100%, 30% 100%, 0% 30%);
+    box-shadow: 0 0 8px 2px rgba(179,136,255,0.7);
+    animation: voidDrift 10s linear infinite;
+}
+
+body.biome-voidrift .stats-panel,
+body.biome-voidrift .shop-panel,
+body.biome-voidrift .modal-window,
+body.biome-voidrift .depth-modal {
+    border: 2px solid #9b5de5;
+    border-radius: 16px;
+    background: linear-gradient(160deg, #241443, #180d2e 45%, #0a0616);
+    box-shadow:
+        inset 0 2px 4px rgba(230, 214, 255, 0.25),
+        inset 0 0 30px rgba(0,0,0,0.7),
+        inset 0 -6px 10px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(179,136,255,0.5),
+        0 0 25px rgba(140,60,255,0.4),
+        0 8px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+/* Shard overlays sticking outward from every side, not just corners */
+body.biome-voidrift .stats-panel::before,
+body.biome-voidrift .shop-panel::before,
+body.biome-voidrift .modal-window::before,
+body.biome-voidrift .depth-modal::before {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    background-image:
+        linear-gradient(135deg, transparent 48%, rgba(179,136,255,0.55) 49%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, rgba(179,136,255,0.4) 49%, transparent 52%);
+    background-size: 30px 30px;
+    background-position: 0 0, 100% 100%;
+    background-repeat: no-repeat;
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: -1;
+    filter: drop-shadow(0 0 5px rgba(155,93,229,0.7));
+}
+
+body.biome-voidrift .frame-corner {
+    border: none !important;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #f2e6ff, #9b5de5 50%, #22093f);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.6), inset 0 -2px 3px rgba(0,0,0,0.6);
+    filter: drop-shadow(0 0 5px #a259ff) drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+body.biome-voidrift .frame-corner.top-left     { clip-path: polygon(0 30%, 30% 0, 100% 0, 100% 100%, 0 100%); animation: voidShardTwitch 3.2s ease-in-out infinite; }
+body.biome-voidrift .frame-corner.top-right    { clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%); animation: voidShardTwitch 3.6s ease-in-out infinite reverse; }
+body.biome-voidrift .frame-corner.bottom-left  { clip-path: polygon(0 0, 100% 0, 100% 100%, 30% 100%, 0 70%); animation: voidShardTwitch 4s ease-in-out infinite; }
+body.biome-voidrift .frame-corner.bottom-right { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); animation: voidShardTwitch 3.4s ease-in-out infinite reverse; }
+@keyframes voidShardTwitch {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    50% { transform: translate(-2px,2px) rotate(-4deg); }
+}
+
+body.biome-voidrift .upgrade-item {
+    border: 2px solid #9b5de5;
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(94,53,177,0.15), transparent 50%), var(--surface-color);
+    box-shadow:
+        inset 0 2px 3px rgba(230, 214, 255, 0.15),
+        inset 0 0 20px 4px rgba(0,0,0,0.7);
+}
+body.biome-voidrift .upgrade-item:hover:not(.disabled) {
+    box-shadow: inset 0 0 20px 4px rgba(0,0,0,0.7), 0 0 20px rgba(179,136,255,0.5);
+    transform: translateY(-4px);
+}
+
+/* Cosmic portal click button + floating void shards (spans already in HTML) */
+body.biome-voidrift .click-button-frame .void-shard { opacity: 1; }
+body.biome-voidrift .click-button-frame .shard-1 { top: -6px; left: 30%; transform: rotate(10deg); animation: voidShardFloat 3.2s ease-in-out infinite; }
+body.biome-voidrift .click-button-frame .shard-2 { bottom: -4px; right: 18%; transform: rotate(-18deg); animation: voidShardFloat 4s ease-in-out infinite reverse; }
+body.biome-voidrift .click-button-frame .shard-3 { left: -8px; top: 45%; transform: rotate(90deg); animation: voidShardFloat 3.6s ease-in-out infinite; }
+body.biome-voidrift .click-button-frame .shard-4 { right: -8px; top: 40%; transform: rotate(-90deg); animation: voidShardFloat 2.8s ease-in-out infinite reverse; }
+@keyframes voidShardFloat {
+    0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+    50% { transform: translateY(-10px) rotate(var(--r, 0deg)); }
+}
+
+/* Swirling cosmic void portal click button — pulsing radial gradients,
+   glowing purple aura, with orbital void shards sticking outward. */
+body.biome-voidrift #click-button {
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 50%, #fdf9ff 0%, #f2e6ff 14%, #c9a3ff 32%, #9b5de5 55%, #4a1a80 80%, #150022 100%);
+    border: 5px solid #150022;
+    outline: 3px solid rgba(201, 163, 255, 0.4);
+    outline-offset: -6px;
+    box-shadow:
+        inset 0 8px 14px rgba(255,255,255,0.4),
+        inset 0 -14px 20px rgba(0,0,0,0.65),
+        0 8px 0 #150022,
+        0 12px 22px rgba(0,0,0,0.55),
+        0 0 26px 8px rgba(155,93,229,0.6),
+        0 0 60px 20px rgba(74,26,128,0.4);
+    animation: voidPulseBorder 2.4s ease-in-out infinite, voidPortalSwirl 4s ease-in-out infinite;
+}
+/* Slowly swirling portal surface — rotated as a separate layer so the
+   button's own drop-shadows and edges stay perfectly smooth/round */
+body.biome-voidrift #click-button::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: conic-gradient(from 0deg,
+        rgba(255,255,255,0.3), transparent 25%, rgba(155,93,229,0.4) 50%,
+        transparent 75%, rgba(255,255,255,0.3) 100%);
+    mix-blend-mode: screen;
+    opacity: 0.75;
+    animation: biomeSlowSpin 6s linear infinite;
+}
+body.biome-voidrift #click-button::after {
+    content: '';
+    position: absolute;
+    inset: 18px;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: inset 0 6px 10px rgba(255,255,255,0.4), inset 0 -8px 14px rgba(0,0,0,0.5);
+}
+@keyframes voidPulseBorder {
+    0%, 100% { border-color: #c9a3ff; }
+    50% { border-color: #4a2e8a; }
+}
+@keyframes voidPortalSwirl {
+    0%, 100% { box-shadow: 0 0 25px 8px rgba(155,93,229,0.6), 0 0 60px 20px rgba(74,26,128,0.4), inset 0 0 40px rgba(0,0,0,0.6); }
+    50%      { box-shadow: 0 0 38px 12px rgba(155,93,229,0.85), 0 0 80px 28px rgba(74,26,128,0.6), inset 0 0 55px rgba(0,0,0,0.75); }
+}
+
+
+/* =============================================================================
+   STAGE 7 — CELESTIAL CORE
+   Golden divine scrollwork/emblems on panel corners with shimmering
+   light halos.
+   ============================================================================= */
+body.biome-celestial {
+    --frame-accent: #ffe27a;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 25% 15%, rgba(110,240,255,0.15), transparent 40%),
+        radial-gradient(circle at 75% 85%, rgba(255,215,0,0.12), transparent 40%),
+        radial-gradient(circle at 50% -10%, rgba(255,215,0,0.22), transparent 60%),
+        linear-gradient(180deg, #14100a, #201808 45%, #0d0a05);
+}
+
+@keyframes celestialMoteRise {
+    0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: translateY(-75vh) scale(1); opacity: 0; }
+}
+body.biome-celestial .biome-particle-field span {
+    width: 3px; height: 3px;
+    background: radial-gradient(circle, #fff8dc, #ffd700 60%, transparent 75%);
+    box-shadow: 0 0 8px 2px rgba(255,215,0,0.7);
+    animation: celestialMoteRise 6s ease-in-out infinite;
+}
+
+body.biome-celestial .stats-panel,
+body.biome-celestial .shop-panel,
+body.biome-celestial .modal-window,
+body.biome-celestial .depth-modal {
+    border: 2px solid #a8842e;
+    border-radius: 18px;
+    background: linear-gradient(160deg, #241c0c, #14100a);
+    box-shadow:
+        0 0 0 1px rgba(255,215,0,0.4) inset,
+        0 0 30px rgba(255,223,100,0.35);
+}
+body.biome-celestial .stats-panel::before,
+body.biome-celestial .shop-panel::before,
+body.biome-celestial .modal-window::before,
+body.biome-celestial .depth-modal::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(255,215,0,0.35);
+    border-radius: 14px;
+    pointer-events: none;
+}
+
+/* Golden scrollwork emblem corners with a soft halo */
+body.biome-celestial .frame-corner {
+    border: none !important;
+    width: 26px;
+    height: 26px;
+    background: none;
+}
+body.biome-celestial .frame-corner::before {
+    content: '✦';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff2b0;
+    text-shadow: 0 0 6px #ffd700, 0 0 12px rgba(255,215,0,0.6);
+}
+body.biome-celestial .frame-corner::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,235,160,0.35), transparent 70%);
+    animation: celestialHaloPulse 2.8s ease-in-out infinite;
+    z-index: -1;
+}
+@keyframes celestialHaloPulse {
+    0%, 100% { opacity: 0.5; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+body.biome-celestial .upgrade-item {
+    border: 2px double #a8842e;
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(255,215,0,0.05), transparent 50%), var(--surface-color);
+}
+body.biome-celestial .upgrade-item:hover:not(.disabled) {
+    box-shadow: 0 0 20px rgba(255,215,0,0.5), 0 0 30px rgba(110,240,255,0.3);
+}
+
+/* Divine halo + orbiting sigil around the click button */
+body.biome-celestial .click-button-frame::before {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,235,160,0.55), transparent 70%);
+    animation: celestialShimmer 2.5s ease-in-out infinite;
+    z-index: -1;
+}
+body.biome-celestial .click-button-frame::after {
+    content: '✦';
+    position: absolute;
+    inset: -22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    color: #fff2b0;
+    font-size: 1.4rem;
+    text-shadow: 0 0 8px #ffd700;
+    animation: biomeSlowSpin 12s linear infinite;
+    pointer-events: none;
+}
+@keyframes celestialShimmer {
+    0%, 100% { opacity: 0.5; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Golden divine rune/emblem click button, ringed by a shimmering holy halo */
+body.biome-celestial #click-button {
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 50%, #fffbe6 0%, #ffe27a 25%, #ffd700 55%, #a8842e 85%, #5c4413 100%);
+    border: 3px solid #ffe27a;
+    color: #3a2a08;
+    box-shadow:
+        0 0 24px 8px rgba(255,215,0,0.55),
+        0 0 60px 22px rgba(255,223,100,0.3),
+        inset 0 0 18px rgba(255,255,255,0.6);
+    animation: celestialCoreGlow 2.8s ease-in-out infinite;
+    position: relative;
+}
+body.biome-celestial #click-button::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.55);
+    pointer-events: none;
+}
+body.biome-celestial #click-button::after {
+    content: '✦';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    color: #fff8dc;
+    text-shadow: 0 0 10px #ffd700, 0 0 18px rgba(255,215,0,0.7);
+    pointer-events: none;
+}
+@keyframes celestialCoreGlow {
+    0%, 100% { box-shadow: 0 0 24px 8px rgba(255,215,0,0.55), 0 0 60px 22px rgba(255,223,100,0.3), inset 0 0 18px rgba(255,255,255,0.6); }
+    50%      { box-shadow: 0 0 36px 12px rgba(255,215,0,0.8), 0 0 80px 28px rgba(255,223,100,0.5), inset 0 0 28px rgba(255,255,255,0.85); }
+}
+
+
+/* =============================================================================
+   SHARED ANIMATION UTILITIES
+   ============================================================================= */
+@keyframes biomeSlowSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* =============================================================================
+   DWARVEN EXPEDITION PASS — theme lock
+   The Expedition Pass uses a single premium Dwarven Metallic theme regardless
+   of the player's current biome. Every biome above restyles .modal-window /
+   .frame-corner globally, so we re-assert the Pass's own look here (loaded
+   last) to guarantee it never inherits a biome's stone/crystal/lava skin.
+   ============================================================================= */
+[class*="biome-"] .pass-modal.modal-window {
+    background:
+        radial-gradient(ellipse at top, rgba(240, 193, 75, 0.08), transparent 60%),
+        linear-gradient(165deg, var(--pass-stone-light) 0%, var(--pass-stone-mid) 45%, var(--pass-stone-dark) 100%) !important;
+    border-color: var(--pass-gold-dark) !important;
+    box-shadow:
+        inset 0 2px 6px rgba(255, 224, 158, 0.15),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.65),
+        0 0 50px rgba(240, 193, 75, 0.2),
+        0 10px 40px rgba(0, 0, 0, 0.7) !important;
+}
+[class*="biome-"] .pass-modal .frame-corner {
+    border-color: var(--pass-gold) !important;
+    filter: drop-shadow(0 0 5px rgba(240, 193, 75, 0.7)) !important;
+    clip-path: polygon(0 0, 100% 0, 0 100%) !important;
+}
+[class*="biome-"] .pass-modal .frame-corner.top-right    { clip-path: polygon(0 0, 100% 0, 100% 100%) !important; }
+[class*="biome-"] .pass-modal .frame-corner.bottom-left  { clip-path: polygon(0 0, 100% 100%, 0 100%) !important; }
+[class*="biome-"] .pass-modal .frame-corner.bottom-right { clip-path: polygon(100% 0, 100% 100%, 0 100%) !important; }
+
+
+/* =============================================================================
+   FIXED 3D BOTTOM NAVIGATION BAR — BIOME ACCENTS
+   Drives the --nav-biome-glow variable style.css uses for the bar's ambient
+   glow line and each active tab's ring/glow, plus a biome-tinted top border
+   on the bar itself so it visibly matches the current depth.
+   ============================================================================= */
+
+.bottom-nav {
+    --nav-biome-glow: rgba(255, 215, 0, 0.18); /* Surface Mine default */
+}
+
+/* Stage 2 — Slate & Iron: cool brushed-steel glow */
+body.biome-slateiron .bottom-nav {
+    --nav-biome-glow: rgba(183, 195, 204, 0.35);
+    border-top-color: rgba(183, 195, 204, 0.3);
+}
+
+/* Stage 3 — Bioluminescent Grotto: living green spore glow */
+body.biome-grotto .bottom-nav {
+    --nav-biome-glow: rgba(87, 255, 160, 0.4);
+    border-top-color: rgba(87, 255, 160, 0.3);
+}
+
+/* Stage 4 — Mithril Depths: cyan crystal glow */
+body.biome-mithril .bottom-nav {
+    --nav-biome-glow: rgba(111, 242, 234, 0.45);
+    border-top: 1px solid rgba(111, 242, 234, 0.45);
+    box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.18),
+        inset 0 -6px 14px rgba(0, 0, 0, 0.55),
+        0 -4px 22px rgba(111, 242, 234, 0.25),
+        0 -1px 0 rgba(111, 242, 234, 0.5);
+}
+body.biome-mithril .nav-tab.active {
+    box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.22),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(111, 242, 234, 0.6),
+        0 0 16px rgba(111, 242, 234, 0.55),
+        0 2px 0 rgba(0, 0, 0, 0.55);
+}
+body.biome-mithril .nav-tab.active { color: #6ff2ea; }
+
+/* Stage 5 — Magma Core: volcanic orange glow */
+body.biome-magma .bottom-nav {
+    --nav-biome-glow: rgba(255, 138, 80, 0.5);
+    border-top: 1px solid rgba(255, 138, 80, 0.5);
+    box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.14),
+        inset 0 -6px 14px rgba(0, 0, 0, 0.6),
+        0 -4px 26px rgba(255, 138, 80, 0.3),
+        0 -1px 0 rgba(255, 138, 80, 0.55);
+}
+body.biome-magma .nav-tab.active {
+    background: linear-gradient(180deg, rgba(255, 138, 80, 0.2) 0%, #262628 55%, #1c1c1e 100%);
+    box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.2),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 138, 80, 0.65),
+        0 0 18px rgba(255, 138, 80, 0.6),
+        0 2px 0 rgba(0, 0, 0, 0.55);
+}
+body.biome-magma .nav-tab.active { color: #ff8a50; }
+
+/* Stage 6 — Void Rift: neon purple/cosmic glow */
+body.biome-voidrift .bottom-nav {
+    --nav-biome-glow: rgba(201, 163, 255, 0.55);
+    border-top: 1px solid rgba(201, 163, 255, 0.5);
+    box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.14),
+        inset 0 -6px 14px rgba(0, 0, 0, 0.6),
+        0 -4px 26px rgba(201, 163, 255, 0.3),
+        0 -1px 0 rgba(201, 163, 255, 0.55);
+}
+body.biome-voidrift .nav-tab.active {
+    background: linear-gradient(180deg, rgba(201, 163, 255, 0.22) 0%, #262628 55%, #1c1c1e 100%);
+    box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.2),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(201, 163, 255, 0.7),
+        0 0 20px rgba(201, 163, 255, 0.65),
+        0 2px 0 rgba(0, 0, 0, 0.55);
+}
+body.biome-voidrift .nav-tab.active { color: #c9a3ff; }
+
+/* Stage 7 — Celestial Core: divine gold glow */
+body.biome-celestial .bottom-nav {
+    --nav-biome-glow: rgba(255, 226, 122, 0.5);
+    border-top-color: rgba(255, 226, 122, 0.45);
+}
+body.biome-celestial .nav-tab.active { color: #ffe27a; }

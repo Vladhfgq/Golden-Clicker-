@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gold Clicker Idle</title>
+<!-- Poki SDK (official). If it is blocked or fails to load the game simply runs without ads (see GCAds in script_2.js). -->
+<script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="biomes.css">
+<link rel="stylesheet" href="adventures.css">
+<link rel="stylesheet" href="bosses.css">
+<style>
+    /* Rewarded-ad cards in the Shop (progress bar + counter). Everything else reuses the existing .iap-card / .iap-buy-btn styles. */
+    .iap-ad-count { font-weight: 700; font-size: 0.9em; margin-top: 6px; text-align: center; }
+    .iap-ad-progress { height: 8px; margin: 6px 0 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+    .iap-ad-progress > span { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ffe27a, #f2a71b); transition: width 0.3s ease; }
+    .iap-ad-extra { font-weight: 600; text-align: center; }
+    .iap-ad-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* Daily Quests vs Achievements section styling (added for the quest system split) */
+    .quest-section { margin-bottom: 20px; }
+    .quest-section:last-child { margin-bottom: 0; }
+    .quest-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .quest-section-title {
+        font-weight: 700;
+        font-size: 1.05em;
+    }
+    .quest-reset-timer {
+        font-size: 0.85em;
+        opacity: 0.85;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 3px 10px;
+        border-radius: 999px;
+    }
+    .quest-list { display: flex; flex-direction: column; gap: 10px; }
+
+    /* Skill tree: level-progress label + "partially upgraded" node state.
+       Added for the 5-tier skill upgrade system. If style.css defines its
+       own .skill-node rules, these simply layer on top. */
+    .skill-level-status {
+        font-size: 0.85em;
+        font-weight: 700;
+        opacity: 0.85;
+        margin: 2px 0 6px;
+    }
+    .skill-node.partial {
+        border-color: rgba(255, 200, 80, 0.5);
+    }
+
+    /* ==========================================================
+       Main Game Title — bold, premium 3D metallic/golden styling
+       for the fantasy crafting-clicker theme.
+       ========================================================== */
+    header h1 {
+        margin: 0;
+        font-size: 2.4em;
+        font-weight: 900;
+        letter-spacing: 0.03em;
+        text-align: center;
+        font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+
+        /* Vertical gold-to-amber gradient fill via background-clip */
+        background: linear-gradient(
+            to bottom,
+            #fff6d8 0%,
+            #ffe27a 15%,
+            #ffcb3d 35%,
+            #f2a71b 55%,
+            #d9820c 75%,
+            #a85e08 100%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+
+        /* Heavy layered drop-shadows for 3D depth against dark backgrounds */
+        filter:
+            drop-shadow(0 1px 0 #fff9e6)
+            drop-shadow(0 2px 0 #e0a83a)
+            drop-shadow(0 3px 0 #c8901f)
+            drop-shadow(0 4px 0 #a06c12)
+            drop-shadow(0 5px 1px rgba(60, 35, 5, 0.6))
+            drop-shadow(0 8px 12px rgba(0, 0, 0, 0.55));
+
+        cursor: default;
+        transition: transform 0.25s ease, filter 0.25s ease;
+        transform-origin: center;
+        display: inline-block;
+        width: 100%;
+    }
+
+    header {
+        text-align: center;
+    }
+
+    header h1:hover {
+        transform: scale(1.06);
+        filter:
+            drop-shadow(0 1px 0 #fffdf0)
+            drop-shadow(0 2px 0 #ffce55)
+            drop-shadow(0 3px 0 #e0a020)
+            drop-shadow(0 4px 0 #a06c12)
+            drop-shadow(0 6px 2px rgba(60, 35, 5, 0.65))
+            drop-shadow(0 10px 16px rgba(0, 0, 0, 0.6));
+    }
+
+    /* Settings button + language selector (localization) */
+    #settings-toggle {
+        position: fixed;
+        top: calc(16px + var(--safe-top, 0px));
+        left: calc(16px + var(--safe-left, 0px));
+        background-color: var(--surface-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        border-radius: 20px;
+        padding: 8px 12px;
+        font-size: 0.95rem;
+        line-height: 1;
+        cursor: pointer;
+        z-index: 200;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        min-height: 36px;
+        min-width: 44px;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    #settings-toggle:hover { background-color: #292929; }
+    #settings-toggle:active { transform: scale(0.96); }
+    .settings-modal { max-width: 420px; }
+    #settings-close {
+        background: none;
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    .settings-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .settings-label { font-weight: 700; color: var(--forge-color, #d98a3d); }
+    .settings-select {
+        width: 100%;
+        min-height: 44px;
+        padding: 8px 12px;
+        font-size: 1rem;
+        color: var(--text-color);
+        background-color: #1a1a1a;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    .settings-select:focus { outline: 2px solid var(--forge-color, #d98a3d); outline-offset: 1px; }
+    .settings-note { margin: 0; font-size: 0.85em; opacity: 0.7; }
+    /* Background music (BGM) toggle row inside Settings */
+    .bgm-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 48px;
+        padding: 6px 6px 6px 12px;
+        background-color: #1a1a1a;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+    }
+    .bgm-label { font-weight: 700; color: var(--forge-color, #d98a3d); }
+    .bgm-toggle {
+        min-width: 76px;
+        min-height: 44px;
+        padding: 8px 14px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-color);
+        background-color: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        opacity: 0.75;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    .bgm-toggle.is-on { opacity: 1; color: #1a1206; background-color: var(--forge-color, #d98a3d); border-color: var(--forge-color, #d98a3d); }
+    .bgm-toggle:active { transform: scale(0.96); }
+    .bgm-toggle:focus-visible { outline: 2px solid var(--forge-color, #d98a3d); outline-offset: 2px; }
+</style>
+<!-- Mobile-first / safe-area / touch layer. Keep LAST so it layers over the inline styles above. -->
+<link rel="stylesheet" href="mobile.css">
+<!-- Interaction / scrolling safety layer (keep after mobile.css). Game-owned UI only - nothing here targets Poki SDK elements. -->
+<style id="gc-interaction-fixes">
+    /* Closed modal overlays never intercept input, open ones always do (game modals use the .open class). */
+    .modal-overlay:not(.open), .depth-modal-overlay:not(.open) { pointer-events: none; }
+    .modal-overlay.open, .depth-modal-overlay.open { pointer-events: auto; }
+    /* Gem Shop: fixed-height modal whose product list is the scroll container. */
+    #iap-modal { display: flex; flex-direction: column; max-height: 92vh; max-height: 92dvh; min-height: 0; }
+    #iap-modal > .modal-header, #iap-modal > .iap-wallet { flex: 0 0 auto; }
+    #iap-modal .iap-body {
+        flex: 1 1 auto; min-height: 0;
+        overflow-y: auto; overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
+    /* Interactive controls always receive pointer input. */
+    #iap-overlay.open button, #iap-overlay.open [data-ad-action], #iap-overlay.open [data-buy-gems] { pointer-events: auto; }
+</style>
+</head>
+<body>
+
+<!-- Ambient biome particle field (spores / embers / shards / motes) -->
+<div class="biome-particle-field" id="biome-particle-field" aria-hidden="true"></div>
+
+<!-- Sound Toggle Button -->
+<button id="sound-toggle" hidden aria-hidden="true" tabindex="-1">🔊 Sound: On</button>
+
+<!-- Settings (language selector). Built from SUPPORTED_LANGUAGES in i18n.js. -->
+<button id="settings-toggle" type="button" aria-label="Settings" title="Settings" data-i18n-attr="aria-label:settings;title:settings">⚙️</button>
+
+<div class="container" id="main-view">
+    <header>
+        <h1 data-i18n="game_title">⛏️ Gold Clicker</h1>
+    </header>
+
+    <!-- Active Daily Login Buff Indicator (hidden when no buff is active) -->
+    <div class="active-buff-indicator" id="active-buff-indicator" style="display:none;"></div>
+
+    <!-- Stats Display -->
+    <div class="stats-panel" id="stats-panel">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <p id="coin-count">0</p>
+        <p id="cps-count">0 coins / second</p>
+
+        <!-- Level / Experience Section -->
+        <div class="level-panel" id="level-panel">
+            <div id="level-label">Level 1</div>
+            <div class="xp-bar-outer">
+                <div class="xp-bar-inner" id="xp-bar-inner"></div>
+            </div>
+            <div id="xp-label">0 / 0 XP</div>
+        </div>
+
+        <!-- Prestige / Gems Section -->
+        <div class="prestige-panel" id="prestige-panel">
+            <div id="gem-count">💎 0 Gems</div>
+            <div id="gem-multiplier-label">Permanent Bonus: +0%</div>
+        </div>
+
+        <!-- Shop status badges: VIP / Frenzy / Ad-free / potion quick-use (hidden when empty) -->
+        <div class="iap-hud" id="iap-hud"></div>
+    </div>
+
+    <!-- Depth / Biome Indicator -->
+    <div class="depth-indicator" id="depth-indicator">
+        <div class="depth-icon" id="depth-icon">⛰️</div>
+        <div class="depth-info">
+            <div class="depth-name" id="depth-name">Surface Mine</div>
+            <div class="depth-next" id="depth-next">Reach Level 5 to descend further</div>
+        </div>
+    </div>
+
+    <!-- Zone Info: current location name + multiplier, shown above the clicker -->
+    <div class="zone-info" id="zone-info">
+        <span class="zone-info-name" id="zone-info-name">Surface Mine</span>
+        <span class="zone-info-mult" id="zone-info-mult">1x Multiplier</span>
+    </div>
+
+    <!-- Manual Click Button -->
+    <div class="click-area">
+        <div class="click-button-frame" id="click-button-frame">
+            <div class="void-shard shard-1"></div>
+            <div class="void-shard shard-2"></div>
+            <div class="void-shard shard-3"></div>
+            <div class="void-shard shard-4"></div>
+            <button id="click-button">MINE GOLD</button>
+        </div>
+    </div>
+
+    <!-- Helper activity strip (hidden until at least one helper is hired) -->
+    <div class="helper-status-strip" id="helper-status-strip" style="display:none;"></div>
+
+    <!-- Prestige Button (hidden until milestone is reached) -->
+    <div class="prestige-area">
+        <button id="prestige-button" style="display:none;">✨ Prestige</button>
+        <div id="prestige-hint">Reach Level 10 or 10,000 total coins to Prestige.</div>
+    </div>
+
+    <!-- Shop Section -->
+    <div class="shop-panel">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <h2 data-i18n="shop">Shop</h2>
+
+        <!-- Shop sub-tabs: Upgrades / Helpers -->
+        <div class="shop-tab-bar" id="shop-tab-bar" role="tablist" aria-label="Shop sections" data-i18n-attr="aria-label:shop_sections_aria">
+            <button type="button" class="shop-tab-btn active" data-stab="upgrades" data-i18n="shop_tab_upgrades">⛏️ Upgrades</button>
+            <button type="button" class="shop-tab-btn" data-stab="helpers" data-i18n="shop_tab_helpers">👷 Helpers</button>
+            <button type="button" class="shop-tab-btn" data-stab="afk" data-i18n="shop_tab_afk">⏳ AFK</button>
+        </div>
+
+        <!-- Bulk Buy Multiplier Controls (shared by both tabs) -->
+        <div class="buy-amount-bar" id="buy-amount-bar" role="group" aria-label="Bulk buy amount" data-i18n-attr="aria-label:bulk_buy_aria">
+            <button class="buy-amount-btn" data-amount="1">x1</button>
+            <button class="buy-amount-btn" data-amount="10">x10</button>
+            <button class="buy-amount-btn" data-amount="100">x100</button>
+            <button class="buy-amount-btn" data-amount="MAX" data-i18n="buy_max_btn">MAX</button>
+        </div>
+
+        <div id="shop-tab-panel-upgrades">
+            <div id="shop-container">
+                <!-- Upgrade items are generated dynamically by JS -->
+            </div>
+        </div>
+
+        <div id="shop-tab-panel-helpers" style="display:none;">
+            <div class="helper-summary" id="helper-summary"></div>
+            <div id="helper-list">
+                <!-- Helper cards are generated dynamically by JS -->
+            </div>
+        </div>
+
+        <div id="shop-tab-panel-afk" style="display:none;">
+            <div class="helper-summary afk-current" id="afk-current">⏳ AFK Limit: 2 Hours</div>
+            <div id="afk-list">
+                <!-- AFK upgrade cards are generated dynamically by JS -->
+            </div>
+            <div class="afk-hint" data-i18n="afk_hint">Need even more offline time? 16 &amp; 24 hour limits are in the 💎 Shop.</div>
+        </div>
+    </div>
+
+    <footer data-i18n="footer_saved">
+        Progress is saved automatically in your browser.
+    </footer>
+</div>
+
+<!-- Bosses & Key Chests Floating Button (sits directly above the bottom nav) -->
+<button id="boss-fab" class="boss-fab" aria-label="Bosses and Key Chests" data-i18n-attr="aria-label:boss_fab_aria">
+    <span class="boss-fab-icon">⚔️</span>
+    <span class="boss-fab-label" data-i18n="boss_fab_label">BOSSES</span>
+</button>
+
+<!-- Fixed 3D Bottom Navigation Bar -->
+<nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation" data-i18n-attr="aria-label:nav_aria">
+    <button class="nav-tab active" id="nav-tab-main" data-nav="main">
+        <span class="nav-tab-icon">⛏️</span>
+        <span class="nav-tab-label" data-i18n="nav_main">Main</span>
+    </button>
+    <button class="nav-tab" id="nav-tab-pass" data-nav="pass">
+        <span class="nav-tab-icon">🎖️</span>
+        <span class="nav-tab-label" data-i18n="nav_battle_pass">Battle Pass</span>
+        <span class="nav-tab-dot" id="nav-tab-dot-pass" style="display:none;">!</span>
+    </button>
+    <button class="nav-tab" id="nav-tab-quests" data-nav="quests">
+        <span class="nav-tab-icon">📜</span>
+        <span class="nav-tab-label" data-i18n="nav_quests">Quests</span>
+        <span class="nav-tab-dot" id="nav-tab-dot-quests" style="display:none;">!</span>
+    </button>
+    <button class="nav-tab" id="nav-tab-achievements" data-nav="achievements">
+        <span class="nav-tab-icon">🏆</span>
+        <span class="nav-tab-label" data-i18n="nav_achievements">Achievements</span>
+        <span class="nav-tab-dot" id="nav-tab-dot-achievements" style="display:none;">!</span>
+    </button>
+    <button class="nav-tab" id="nav-tab-prestige" data-nav="prestige">
+        <span class="nav-tab-icon">⚒️</span>
+        <span class="nav-tab-label" data-i18n="nav_prestige">Prestige</span>
+        <span class="nav-tab-dot" id="nav-tab-dot-prestige" style="display:none;">!</span>
+    </button>
+    <button class="nav-tab" id="nav-tab-adventures" data-nav="adventures">
+        <span class="nav-tab-icon">⚔️</span>
+        <span class="nav-tab-label" data-i18n="nav_adventures">Adventures</span>
+        <span class="nav-tab-dot" id="nav-tab-dot-adventures" style="display:none;">!</span>
+    </button>
+    <button class="nav-tab" id="nav-tab-shop" data-nav="shop">
+        <span class="nav-tab-icon">💎</span>
+        <span class="nav-tab-label" data-i18n="nav_shop">Shop</span>
+    </button>
+</nav>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-overlay">
+    <div class="modal-window settings-modal" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="modal-header">
+            <h2 id="settings-title" data-i18n="settings_title">⚙️ Settings</h2>
+            <button id="settings-close" type="button" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+        <div class="settings-body">
+            <label class="settings-label" for="language-select" data-i18n="language">Language</label>
+            <select id="language-select" class="settings-select" data-i18n-attr="aria-label:language_select_label" aria-label="Select language"></select>
+            <div class="volume-control" id="volume-control">
+                <span id="volume-icon" class="volume-icon" aria-hidden="true">🔊</span>
+                <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+                <span id="volume-percent" class="volume-percent" aria-live="off">100%</span>
+            </div>
+            <div class="bgm-control" id="bgm-control">
+                <span class="bgm-label" id="bgm-label">🎵 Background Music</span>
+                <button type="button" id="bgm-toggle" class="bgm-toggle is-on" role="switch" aria-checked="true" aria-labelledby="bgm-label"><span class="bgm-toggle-state">ON</span></button>
+            </div>
+            <p class="settings-note" data-i18n="settings_saved_note">Your language choice is saved automatically.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Dwarven Forge / Skill Tree Modal -->
+<div class="modal-overlay" id="skill-tree-overlay">
+    <div class="modal-window" id="skill-tree-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="modal-header">
+            <h2 data-i18n="forge_title">⚒️ Dwarven Forge</h2>
+            <button id="skill-tree-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+
+        <!-- Forge Sub-Tabs: Skill Tree vs. Relic Excavation -->
+        <div class="forge-tab-bar">
+            <button class="forge-tab-button active" id="forge-tab-btn-skills" data-ftab="skills" data-i18n="forge_tab_skills">⚒️ Skill Tree</button>
+            <button class="forge-tab-button" id="forge-tab-btn-relics" data-ftab="relics" data-i18n="forge_tab_relics">🏺 Relic Excavation</button>
+        </div>
+
+        <!-- Sub-Tab 1: Skill Tree (existing Dwarven Forge content) -->
+        <div class="forge-tab-panel active" id="forge-tab-panel-skills">
+            <div class="modal-subheader">
+                <span id="skill-tree-gem-count">💎 0 Gems</span>
+                <span class="modal-hint" data-i18n="forge_skill_hint">Spend Prestige Gems to level up permanent bonuses, up to level 5.</span>
+            </div>
+            <div class="skill-tree-body">
+                <div class="skill-path" data-path="miner">
+                    <div class="skill-path-title" data-i18n="forge_path_miner">⛏️ Path of the Miner</div>
+                    <div class="skill-path-sub" data-i18n="forge_path_miner_sub">Active click power</div>
+                    <div class="skill-column" id="skill-column-miner"></div>
+                </div>
+                <div class="skill-path" data-path="engineer">
+                    <div class="skill-path-title" data-i18n="forge_path_engineer">⚙️ Path of the Engineer</div>
+                    <div class="skill-path-sub" data-i18n="forge_path_engineer_sub">Passive production</div>
+                    <div class="skill-column" id="skill-column-engineer"></div>
+                </div>
+                <div class="skill-path" data-path="merchant">
+                    <div class="skill-path-title" data-i18n="forge_path_merchant">💰 Path of the Merchant</div>
+                    <div class="skill-path-sub" data-i18n="forge_path_merchant_sub">Utility & efficiency</div>
+                    <div class="skill-column" id="skill-column-merchant"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-Tab 2: Relic Excavation -->
+        <div class="forge-tab-panel" id="forge-tab-panel-relics">
+            <div class="modal-subheader">
+                <span id="relic-gem-count">💎 0 Gems</span>
+                <span class="modal-hint" data-i18n="relic_hint">Spend Gems to dig up ancient dwarven relics with permanent passive effects.</span>
+            </div>
+            <div class="relic-dig-bar">
+                <button id="relic-dig-btn">
+                    <span data-i18n="relic_excavate">🪏 Excavate Relic</span>
+                    <span class="relic-dig-cost" id="relic-dig-cost-label">💎 25-50</span>
+                </button>
+                <div class="relic-result-banner" id="relic-result-banner"></div>
+            </div>
+            <div class="relic-grid" id="relic-grid">
+                <!-- Relic cards generated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adventures & Crafting Modal (Materials, Crafting, Runes) -->
+<div class="modal-overlay" id="adv-overlay">
+    <div class="modal-window adv-modal" id="adv-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="modal-header">
+            <h2 data-i18n="adv_title">⚔️ Adventures &amp; Crafting</h2>
+            <button id="adv-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+
+        <!-- Adventures Sub-Tabs -->
+        <div class="forge-tab-bar adv-tab-bar">
+            <button class="forge-tab-button active" id="adv-tab-btn-crafting" data-atab="crafting" data-i18n="adv_tab_crafting">🛠️ Crafting</button>
+            <button class="forge-tab-button" id="adv-tab-btn-runes" data-atab="runes" data-i18n="adv_tab_runes">📜 Runes</button>
+            <button class="forge-tab-button" id="adv-tab-btn-inventory" data-atab="inventory" data-i18n="adv_tab_inventory">🎒 Inventory</button>
+        </div>
+
+        <!-- Sub-Tab 1: Material Crafting -->
+        <div class="forge-tab-panel active adv-tab-panel" id="adv-tab-panel-crafting">
+            <div class="modal-subheader">
+                <span class="modal-hint" data-i18n="adv_crafting_hint">Combine materials into potions and permanent gear. Recipes unlock as you gather ingredients.</span>
+            </div>
+            <div class="adv-recipe-grid" id="adv-recipe-grid">
+                <!-- Recipe cards generated dynamically -->
+            </div>
+        </div>
+
+        <!-- Sub-Tab 2: Rune Scrolls -->
+        <div class="forge-tab-panel adv-tab-panel" id="adv-tab-panel-runes">
+            <div class="modal-subheader">
+                <span class="modal-hint" id="adv-runes-hint">Equip up to 3 Runes for powerful passive effects. Craft new Runes from materials.</span>
+            </div>
+            <div class="adv-rune-slots" id="adv-rune-slots">
+                <!-- 3 equip slots generated dynamically -->
+            </div>
+            <div class="adv-section-title" data-i18n="adv_runes_section">📜 Craftable &amp; Owned Runes</div>
+            <div class="adv-rune-grid" id="adv-rune-grid">
+                <!-- Rune cards generated dynamically -->
+            </div>
+        </div>
+
+        <!-- Sub-Tab 3: Material Inventory -->
+        <div class="forge-tab-panel adv-tab-panel" id="adv-tab-panel-inventory">
+            <div class="modal-subheader">
+                <span class="modal-hint" data-i18n="adv_inventory_hint">Materials drop from mining and mine events, based on your current biome.</span>
+            </div>
+            <div class="adv-material-grid" id="adv-material-grid">
+                <!-- Material cards generated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bosses & Key Chests Modal -->
+<div class="modal-overlay boss-overlay" id="boss-overlay">
+    <div class="modal-window boss-modal" id="boss-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="modal-header boss-modal-header">
+            <h2 data-i18n="boss_modal_title">⚔️ Bosses &amp; Key Chests</h2>
+            <button id="boss-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+
+        <!-- Boss Modal Sub-Tabs -->
+        <div class="forge-tab-bar boss-tab-bar">
+            <button class="forge-tab-button active boss-tab-button" id="boss-tab-btn-fights" data-btab="fights" data-i18n="boss_tab_fights">⚔️ Boss Fights</button>
+            <button class="forge-tab-button boss-tab-button" id="boss-tab-btn-altar" data-btab="altar" data-i18n="boss_tab_altar">🧰 Key Altar</button>
+        </div>
+
+        <!-- Sub-Tab 1: Boss Fights -->
+        <div class="forge-tab-panel boss-tab-panel active" id="boss-tab-panel-fights">
+            <div class="modal-subheader boss-modal-subheader">
+                <span class="modal-hint" data-i18n="boss_fights_hint">Challenge a boss for free before the timer runs out. Land clicks to deal damage and earn 🔑 Keys on victory!</span>
+            </div>
+            <div class="boss-card-grid" id="boss-card-grid">
+                <!-- Boss cards generated dynamically -->
+            </div>
+        </div>
+
+        <!-- Sub-Tab 2: Key Altar (Chest) -->
+        <div class="forge-tab-panel boss-tab-panel" id="boss-tab-panel-altar">
+            <div class="modal-subheader boss-modal-subheader">
+                <span class="modal-hint" data-i18n="boss_altar_hint">Spend a 🔑 Key (won from bosses) to open a chest. Higher-tier keys unlock better loot: coins, XP, gems &amp; relics!</span>
+            </div>
+
+            <div class="key-altar-chest-area">
+                <!-- Chest type selector: choose which key to spend -->
+                <div class="key-altar-type-bar" id="key-altar-type-bar" role="tablist" aria-label="Chest type" data-i18n-attr="aria-label:boss_chest_type_aria">
+                    <button type="button" class="key-altar-type-btn active" data-chest="common" data-i18n="key_type_btn_common">🔑 Common</button>
+                    <button type="button" class="key-altar-type-btn" data-chest="rare" data-i18n="key_type_btn_rare">🔑 Rare</button>
+                    <button type="button" class="key-altar-type-btn" data-chest="legendary" data-i18n="key_type_btn_legendary">🔑 Legendary</button>
+                </div>
+                <div class="key-altar-chest" id="key-altar-chest">🧰</div>
+                <button id="key-altar-open-btn" class="key-altar-open-btn">…</button>
+                <div class="key-altar-result" id="key-altar-result"></div>
+            </div>
+
+            <div class="adv-section-title" data-i18n="boss_your_keys">🔑 Your Keys</div>
+            <div class="key-inventory-grid" id="key-inventory-grid">
+                <!-- Key inventory cards generated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Boss Fight Overlay (full-screen encounter with HP bar + timer) -->
+<div class="boss-fight-overlay" id="boss-fight-overlay">
+    <div class="boss-fight-arena" id="boss-fight-arena">
+        <div class="boss-fight-timer" id="boss-fight-timer">20s</div>
+        <div class="boss-fight-name" id="boss-fight-name">Stone Golem</div>
+        <div class="boss-fight-hpbar-outer">
+            <div class="boss-fight-hpbar-inner" id="boss-fight-hpbar-inner" style="width:100%"></div>
+        </div>
+        <div class="boss-fight-hp-label" id="boss-fight-hp-label">0 / 0 HP</div>
+        <button class="boss-fight-target" id="boss-fight-target-btn">
+            <span class="boss-fight-target-icon" id="boss-fight-target-icon">🗿</span>
+        </button>
+        <div class="boss-fight-result-overlay" id="boss-fight-result-overlay">
+            <div class="boss-fight-result-title" id="boss-fight-result-title" data-i18n="boss_result_victory">VICTORY!</div>
+            <div class="boss-fight-result-loot" id="boss-fight-result-loot"></div>
+            <button class="boss-fight-result-close" id="boss-fight-result-close" data-i18n="boss_claim_reward">Claim Reward</button>
+        </div>
+    </div>
+</div>
+
+<!-- New Depth Discovered Notification -->
+<div class="depth-modal-overlay" id="depth-modal-overlay">
+    <div class="depth-modal" id="depth-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="depth-modal-icon" id="depth-modal-icon">⛰️</div>
+        <div class="depth-modal-title" data-i18n="depth_new_title">New Depth Discovered!</div>
+        <div class="depth-modal-name" id="depth-modal-name">Surface Mine</div>
+        <div class="depth-modal-mult" id="depth-modal-mult">1x Multiplier</div>
+        <div class="depth-modal-text" id="depth-modal-text"></div>
+        <button id="depth-modal-close" data-i18n="depth_continue">Continue Mining</button>
+    </div>
+</div>
+
+<!-- Offline Progress ("Welcome Back") Modal -->
+<div class="offline-modal-overlay" id="offline-modal-overlay">
+    <div class="offline-modal" id="offline-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="offline-modal-icon">⛏️💤</div>
+        <div class="offline-modal-title" data-i18n="offline_title">Welcome Back!</div>
+        <div class="offline-modal-text" data-i18n="offline_away">You were away for</div>
+        <div class="offline-modal-duration" id="offline-modal-duration">0 hours 0 minutes 0 seconds</div>
+        <div class="offline-modal-counted" id="offline-modal-counted" style="display:none;"></div>
+        <div class="offline-modal-text" data-i18n="offline_earned">Your mines kept working and earned:</div>
+        <div class="offline-modal-amount" id="offline-modal-amount">+0 🪙</div>
+        <div class="offline-modal-buttons">
+            <button id="offline-modal-claim" data-i18n="offline_claim">💰 Claim</button>
+        </div>
+        <div class="offline-modal-note" id="offline-modal-note"></div>
+    </div>
+</div>
+
+<!-- Achievements Modal -->
+<div class="modal-overlay" id="achievements-overlay">
+    <div class="modal-window quest-book-modal" id="achievements-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="modal-header quest-book-header">
+            <h2 data-i18n="ach_modal_title">🏆 Achievements</h2>
+            <button id="achievements-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+        <div class="quest-book-body">
+            <div class="quest-section">
+                <div class="quest-section-header ach-section-header">
+                    <span class="quest-section-title" data-i18n="ach_section_title">🏆 Permanent Achievements</span>
+                </div>
+                <div class="quest-list" id="achievement-list">
+                    <!-- Achievement cards generated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dwarven Expedition Pass Modal (Battle Pass ONLY — full-screen, spacious reward track) -->
+<div class="modal-overlay pass-overlay" id="pass-overlay">
+    <div class="modal-window pass-modal" id="pass-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+
+        <div class="modal-header pass-header">
+            <h2 data-i18n="pass_title">🎖️ Expedition Pass</h2>
+            <button id="pass-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+
+        <div class="pass-progress-bar-section">
+            <div class="pass-level-badge">
+                <span class="pass-level-badge-num" id="pass-level-badge-num">1</span>
+                <span class="pass-level-badge-label" data-i18n="pass_level_badge">LEVEL</span>
+            </div>
+            <div class="pass-progress-main">
+                <div class="pass-progress-top-row">
+                    <span id="pass-xp-label">0 / 1,000 XP</span>
+                    <span id="pass-next-level-label">Next: Level 2</span>
+                </div>
+                <div class="pass-progress-outer">
+                    <div class="pass-progress-inner" id="pass-progress-inner"></div>
+                    <div class="pass-progress-glow" id="pass-progress-glow"></div>
+                </div>
+            </div>
+            <div class="pass-max-badge" id="pass-max-badge" style="display:none;" data-i18n="pass_max_badge">MAX RANK</div>
+        </div>
+
+        <div class="pass-body">
+            <div class="pass-tab-panel active" id="pass-tab-panel-rewards">
+                <div class="pass-track-header">
+                    <span class="pass-track-col pass-track-col-level" data-i18n="pass_col_level">Level</span>
+                    <span class="pass-track-col pass-track-col-free" data-i18n="pass_col_free">🆓 Free Track</span>
+                    <span class="pass-track-col pass-track-col-premium" data-i18n="pass_col_premium">👑 Premium Track</span>
+                    <span class="pass-track-col pass-track-col-claim" data-i18n="pass_col_claim">Claim</span>
+                </div>
+                <div class="pass-track-scroll" id="pass-track-scroll">
+                    <!-- 60 level reward rows generated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quests Modal: Daily/Weekly Quests + Daily Login Calendar (no Battle Pass content) -->
+<div class="modal-overlay pass-overlay" id="quests-overlay">
+    <div class="modal-window pass-modal quests-modal" id="quests-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+
+        <div class="modal-header pass-header">
+            <h2 data-i18n="quests_modal_title">📜 Quests</h2>
+            <button id="quests-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+
+        <div class="pass-body-tabs">
+            <button class="pass-body-tab-button active" id="pass-tab-btn-quests" data-tab="quests" data-i18n="quests_tab_quests">📜 Quests</button>
+            <button class="pass-body-tab-button" id="pass-tab-btn-daily" data-tab="daily" data-i18n="quests_tab_daily_rewards">🗓️ Daily Rewards</button>
+        </div>
+
+        <div class="pass-body">
+            <!-- Sub-Tab 1: Quests — Daily / Weekly tasks with Pass XP -->
+            <div class="pass-tab-panel active" id="pass-tab-panel-quests">
+                <div class="pass-quest-tabs">
+                    <button class="pass-quest-tab-button active" id="pass-quest-tab-btn-daily" data-qtab="daily" data-i18n="quests_sub_daily">🗓️ Daily</button>
+                    <button class="pass-quest-tab-button" id="pass-quest-tab-btn-weekly" data-qtab="weekly" data-i18n="quests_sub_weekly">📅 Weekly</button>
+                </div>
+
+                <div class="quest-section">
+                    <div class="quest-section-header">
+                        <span class="quest-section-title" id="pass-quest-section-title">🗒️ Daily Expedition Tasks</span>
+                        <span class="quest-reset-timer" id="pass-quest-reset-timer">Resets In: --h --m</span>
+                    </div>
+                    <div class="quest-list" id="pass-quest-list-daily">
+                        <!-- Daily pass quest cards generated dynamically -->
+                    </div>
+                    <div class="quest-list" id="pass-quest-list-weekly" style="display:none;">
+                        <!-- Weekly pass quest cards generated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Standard Daily Quests (rotate every 24h, separate from Expedition Pass tasks) -->
+                <div class="quest-section">
+                    <div class="quest-section-header">
+                        <span class="quest-section-title" data-i18n="quests_daily_title">🗒️ Daily Quests</span>
+                        <span class="quest-reset-timer" id="quest-reset-timer">Quests Reset In: --h --m</span>
+                    </div>
+                    <div class="quest-list" id="daily-quest-list">
+                        <!-- Daily quest cards generated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-Tab 2: Daily Rewards — 7-day streak login calendar -->
+            <div class="pass-tab-panel" id="pass-tab-panel-daily">
+                <div class="daily-login-intro">
+                    <span id="daily-streak-label">Streak: Day 1</span>
+                    <span id="daily-next-label" class="quest-hint"></span>
+                </div>
+                <div class="daily-login-grid" id="daily-login-grid">
+                    <!-- Day cards generated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     Shop (Gems)
+     ============================================================ -->
+<div class="modal-overlay iap-overlay" id="iap-overlay">
+    <div class="modal-window iap-modal" id="iap-modal">
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="modal-header iap-header">
+            <h2 data-i18n="iap_title">💎 Shop</h2>
+            <button id="iap-close" aria-label="Close" data-i18n-attr="aria-label:close">✕</button>
+        </div>
+        <div class="iap-wallet">
+            <span class="iap-wallet-gems" id="iap-gem-count">💎 0 Gems</span>
+            <span class="iap-wallet-vip" id="iap-vip-status">👑 VIP Inactive</span>
+        </div>
+        <div class="iap-body">
+            <section class="iap-section">
+                <h3 class="iap-section-title" id="iap-free-title">📺 Free Rewards</h3>
+                <div class="iap-grid iap-grid-vip" id="iap-free-grid"></div>
+            </section>
+            <section class="iap-section">
+                <h3 class="iap-section-title">👑 VIP</h3>
+                <div class="iap-grid iap-grid-vip" id="iap-vip-grid"></div>
+                <div class="iap-grid iap-grid-vip" id="iap-vip-ad"></div>
+            </section>
+            <section class="iap-section">
+                <h3 class="iap-section-title">🏆 Premium Pass</h3>
+                <div class="iap-grid iap-grid-vip" id="iap-pass-grid"></div>
+                <div class="iap-grid iap-grid-vip" id="iap-pass-ad"></div>
+            </section>
+            <section class="iap-section">
+                <h3 class="iap-section-title">⏳ AFK / Offline Progress</h3>
+                <div class="iap-grid iap-grid-vip" id="iap-afk-card"></div>
+                <div class="iap-grid iap-grid-vip" id="iap-afk-ad"></div>
+            </section>
+        </div>
+        <div class="iap-toast" id="iap-toast" role="status"></div>
+    </div>
+</div>
+
+<script>
+    // Populate the ambient particle field with randomly placed/timed spans.
+    // Pure presentation — safe to run regardless of game state, and adds
+    // no dependency on script.js internals.
+    // Juicy click feedback: squash-and-stretch settle + radiating pulse wave.
+    // Purely additive/presentational — does not touch game state, so it is
+    // safe to run alongside whatever click handler script.js attaches.
+    (function initClickJuice() {
+        const frame = document.getElementById('click-button-frame');
+        const btn = document.getElementById('click-button');
+        if (!frame || !btn) return;
+
+        // Performance: the pulse-wave rings are recycled from a small pool (no create/remove per click)
+        // and the squash/pulse animation restarts are batched into ONE reflow per frame via GCFrame
+        // (script_2.js), no matter how many clicks landed in that frame.
+        const MAX_WAVES = 8;
+        const idleWaves = [];
+        const activeWaves = [];
+        let restartQueued = false;
+
+        function acquireWave() {
+            let wave = idleWaves.pop();
+            if (!wave) {
+                if (activeWaves.length >= MAX_WAVES) {
+                    wave = activeWaves.shift(); // recycle the oldest ring
+                } else {
+                    wave = document.createElement('div');
+                    wave.className = 'click-pulse-wave';
+                    wave.style.display = 'none';
+                    wave.addEventListener('animationend', function () {
+                        const i = activeWaves.indexOf(wave);
+                        if (i !== -1) activeWaves.splice(i, 1);
+                        wave.style.display = 'none';
+                        idleWaves.push(wave);
+                    });
+                    frame.appendChild(wave);
+                }
+            }
+            activeWaves.push(wave);
+            return wave;
+        }
+
+        btn.addEventListener('click', function () {
+            if (restartQueued) return;
+            if (!window.GCFrame) { // safety net: original behaviour if script_2.js is unavailable
+                frame.classList.remove('is-clicked');
+                void frame.offsetWidth;
+                frame.classList.add('is-clicked');
+                return;
+            }
+            let wave = null;
+            restartQueued = window.GCFrame.queue(function () {
+                frame.classList.remove('is-clicked');
+                wave = acquireWave();
+                wave.style.animation = 'none';
+                wave.style.display = '';
+            }, function () {
+                frame.classList.add('is-clicked');
+                wave.style.animation = '';
+                restartQueued = false;
+            });
+        });
+    })();
+
+    (function initBiomeParticles() {
+        const field = document.getElementById('biome-particle-field');
+        if (!field) return;
+        const COUNT = 24;
+        for (let i = 0; i < COUNT; i++) {
+            const span = document.createElement('span');
+            span.style.left = Math.random() * 100 + 'vw';
+            span.style.bottom = (Math.random() * 20 - 10) + 'vh';
+            span.style.animationDelay = (Math.random() * 8) + 's';
+            span.style.animationDuration = (5 + Math.random() * 6) + 's';
+            field.appendChild(span);
+        }
+    })();
+</script>
+<script src="i18n.js"></script>
+<script src="script_2.js"></script>
+<script src="adventures.js"></script>
+<script src="bosses.js"></script>
+</body>
+</html>

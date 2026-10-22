@@ -1,0 +1,812 @@
+/* =========================================================================
+   GOLD CLICKER IDLE — MOBILE-FIRST / RESPONSIVE LAYER
+   -------------------------------------------------------------------------
+   Loaded LAST (after style.css, biomes.css, adventures.css, bosses.css and
+   the inline <style> in the HTML) so it only has to adjust layout, safe
+   areas, touch behaviour and overflow. It deliberately contains NO colours,
+   gradients, shadows or animations, so the game's look is untouched.
+
+   Desktop (wide window + mouse) is intentionally left as it was: every
+   layout change below is inside a mobile / short-screen media query.
+   Rules outside a media query are visually neutral on desktop
+   (env() insets resolve to 0, touch-action has no visible effect, etc.).
+
+   Sections
+     0. Tokens & base
+     1. Safe areas for fixed UI
+     2. Touch behaviour & touch targets
+     3. Text overflow protection (all sizes)
+     4. Modals (mobile + short screens)
+     5. Grids & cards
+     6. Responsive breakpoints: 768 / 640 / 480 / 420 / 340
+     7. Short-height & landscape (max-height: 700 / 500)
+   ========================================================================= */
+
+
+/* -------------------------------------------------------------------------
+   0. TOKENS & BASE
+   ------------------------------------------------------------------------- */
+:root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+
+    /* Visual height of the bottom nav WITHOUT the safe-area part.
+       bosses.css already adds env(safe-area-inset-bottom) on top of this
+       when placing #boss-fab, so this must exclude the inset. */
+    --bottom-nav-height: 78px;
+    --tap-min: 44px;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Same 20px gutter as before, plus the notch / rounded-corner insets
+       (relevant in landscape, where the insets are on the left/right). */
+    padding-top: calc(20px + var(--safe-top));
+    padding-right: calc(20px + var(--safe-right));
+    padding-left: calc(20px + var(--safe-left));
+    /* Room for: bottom nav + floating BOSSES button + home indicator, so the
+       last row of any scrollable page can always be reached. */
+    padding-bottom: calc(var(--bottom-nav-height) + 72px + var(--safe-bottom));
+}
+
+/* Flex/grid children must be allowed to shrink, otherwise long numbers or
+   names push the layout wider than the screen. */
+.container,
+.container > *,
+.stats-panel,
+.depth-indicator,
+.upgrade-item,
+.helper-card,
+.quest-card,
+.boss-card,
+.iap-card,
+.iap-item-card,
+.relic-card,
+.adv-recipe-card,
+.adv-rune-card,
+.adv-material-card,
+.key-card {
+    min-width: 0;
+}
+
+.container {
+    max-width: min(500px, 100%);
+}
+
+img, svg, canvas, video {
+    max-width: 100%;
+}
+
+
+/* -------------------------------------------------------------------------
+   1. SAFE AREAS FOR FIXED UI
+   ------------------------------------------------------------------------- */
+
+/* Top-right floating controls: stay clear of the notch / Dynamic Island /
+   rounded corners. (Quest-book / pass / skill-tree buttons are kept for
+   completeness; only #sound-toggle exists in the current HTML.) */
+#sound-toggle {
+    top: calc(16px + var(--safe-top));
+    right: calc(16px + var(--safe-right));
+}
+#expedition-pass-button {
+    top: calc(16px + var(--safe-top));
+    right: calc(66px + var(--safe-right));
+}
+#quest-book-button {
+    top: calc(16px + var(--safe-top));
+    right: calc(140px + var(--safe-right));
+}
+
+/* Bottom nav: keep the existing bottom inset, add left/right insets so the
+   outer tabs are never under a rounded corner or landscape notch. */
+.bottom-nav {
+    padding-left: calc(6px + var(--safe-left));
+    padding-right: calc(6px + var(--safe-right));
+    max-width: 100%;
+}
+
+/* Floating BOSSES button: bottom is already computed in bosses.css from
+   --bottom-nav-height + the bottom inset; only the left side needs the inset. */
+.boss-fab {
+    left: calc(14px + var(--safe-left));
+    max-width: calc(100% - 28px - var(--safe-left) - var(--safe-right));
+}
+
+/* Timed mine-event banner: below the notch, never wider than the screen. */
+.mine-event-banner {
+    top: calc(14px + var(--safe-top));
+    width: min(calc(100% - 24px), 380px);
+}
+
+
+/* -------------------------------------------------------------------------
+   2. TOUCH BEHAVIOUR & TOUCH TARGETS
+   ------------------------------------------------------------------------- */
+
+/* No 300ms delay / double-tap zoom on anything tappable. Pinch-zoom and
+   normal scrolling stay enabled (touch-action: manipulation only removes
+   double-tap-to-zoom). */
+button,
+[role="button"],
+[role="tab"],
+.upgrade-item,
+.mini-event,
+.rift-particle,
+.relic-card,
+.adv-rune-slot,
+.key-altar-chest {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Rapid-tap gameplay controls: no accidental text selection, callout
+   magnifier or image drag while tapping fast. */
+#click-button,
+#click-button-frame,
+.click-button-frame,
+#boss-fight-target-btn,
+.boss-fight-target,
+#mine-event-target-btn,
+.mine-event-target,
+.mini-event,
+.rift-particle,
+.boss-fab,
+.bottom-nav,
+.nav-tab,
+.buy-amount-btn,
+.shop-tab-btn,
+.upgrade-item,
+.helper-buy-btn,
+#prestige-button,
+#sound-toggle {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Close buttons: keep their existing 32px look, but give them a 44px hit
+   area with an invisible pseudo-element (no visual change). */
+button[aria-label="Close"],
+button[data-i18n-attr="aria-label:close"] {
+    position: relative;
+    flex-shrink: 0;
+}
+button[aria-label="Close"]::after,
+button[data-i18n-attr="aria-label:close"]::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+}
+
+/* Minimum ~44px touch targets on touch devices and small screens. */
+@media (pointer: coarse), (max-width: 768px) {
+    #click-button,
+    #prestige-button,
+    #sound-toggle,
+    #expedition-pass-button,
+    #quest-book-button,
+    #skill-tree-button,
+    #relic-dig-btn,
+    #depth-modal-close,
+    .boss-fab,
+    .buy-amount-btn,
+    .shop-tab-btn,
+    .forge-tab-button,
+    .quest-tab-button,
+    .pass-body-tab-button,
+    .pass-quest-tab-button,
+    .skill-buy-btn,
+    .quest-claim-btn,
+    .pass-claim-btn,
+    .adv-craft-btn,
+    .adv-rune-card-btn,
+    .boss-fight-btn,
+    .boss-fight-result-close,
+    .key-altar-type-btn,
+    .key-altar-open-btn,
+    .helper-buy-btn,
+    .iap-buy-btn,
+    .iap-use-btn,
+    .iap-confirm-btn,
+    .offline-modal-buttons button {
+        min-height: var(--tap-min);
+    }
+
+    #sound-toggle,
+    .buy-amount-btn,
+    .iap-use-btn,
+    .skill-buy-btn,
+    .adv-rune-card-btn {
+        min-width: var(--tap-min);
+    }
+
+    /* Tappable rows are already large; just make sure they never go below. */
+    .upgrade-item,
+    .adv-rune-slot {
+        min-height: var(--tap-min);
+    }
+}
+
+
+/* -------------------------------------------------------------------------
+   3. TEXT OVERFLOW PROTECTION (all sizes)
+   Long values wrap (they stay fully readable); ellipsis is used only on the
+   single-line nav labels where wrapping is not possible.
+   ------------------------------------------------------------------------- */
+
+/* Big numbers / counters */
+#coin-count,
+#cps-count,
+#gem-count,
+#gem-multiplier-label,
+#level-label,
+#xp-label,
+#skill-tree-gem-count,
+#relic-gem-count,
+.zone-info-name,
+.zone-info-mult,
+.depth-name,
+.depth-next,
+.upgrade-name,
+.upgrade-desc,
+.upgrade-price,
+.upgrade-owned,
+.upgrade-buy-label,
+.helper-name,
+.helper-desc,
+.helper-effect,
+.helper-buy-price,
+.skill-desc,
+.skill-cost,
+.relic-name,
+.relic-desc,
+.relic-effect-label,
+.quest-card-name,
+.quest-card-reward,
+.quest-hint,
+.pass-reward-text,
+.adv-material-name,
+.adv-recipe-name,
+.adv-recipe-desc,
+.adv-recipe-cost-chip,
+.adv-rune-card-name,
+.adv-rune-card-desc,
+.boss-card-name,
+.boss-card-meta,
+.boss-card-rewards,
+.boss-fight-name,
+.boss-fight-hp-label,
+.boss-loot-amount,
+.boss-loot-label,
+.key-card-name,
+.key-card-count,
+.iap-card-name,
+.iap-card-desc,
+.iap-item-name,
+.iap-item-desc,
+.offline-modal-amount,
+.offline-modal-duration,
+.depth-modal-name,
+.helper-chip,
+.iap-hud-badge {
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+/* Shop upgrade row: name column may shrink, price column keeps its size but
+   never takes more than half the card. */
+.upgrade-item {
+    gap: 10px;
+}
+.upgrade-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.upgrade-stats {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 50%;
+}
+
+/* Gold counter keeps its break-anywhere behaviour; make it scale with width. */
+#coin-count {
+    font-size: clamp(1.9rem, 9vw, 2.8rem);
+    overflow-wrap: anywhere;
+}
+#cps-count {
+    font-size: clamp(0.85rem, 3.8vw, 1rem);
+}
+
+/* Nav labels are single line: ellipsis is the right behaviour here. */
+.nav-tab {
+    min-width: 0;
+}
+.nav-tab-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Flex rows that contain a name + value */
+.quest-card-top,
+.helper-title-row,
+.adv-recipe-top,
+.modal-subheader,
+.zone-info {
+    min-width: 0;
+}
+.zone-info {
+    flex-wrap: wrap;
+}
+.adv-rune-slots {
+    flex-wrap: wrap;
+}
+
+/* Title: scales instead of overflowing on narrow screens (overrides the
+   fixed 2.4em in the inline <style>; same look at desktop size). */
+header h1 {
+    font-size: clamp(1.7rem, 9vw, 2.4rem);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+
+/* -------------------------------------------------------------------------
+   4. MODALS (mobile widths and short screens)
+   Window = flex column: header / tabs stay put, only the content area scrolls.
+   ------------------------------------------------------------------------- */
+
+/* Smooth momentum scrolling + no scroll-chaining into the page behind. */
+.forge-tab-panel.active,
+.adv-tab-panel,
+.skill-tree-body,
+.quest-book-body,
+.pass-track-scroll,
+#pass-tab-panel-quests,
+.iap-body,
+.depth-modal,
+.offline-modal,
+.boss-fight-result-overlay {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 768px), (max-height: 700px) {
+
+    /* The overlay keeps the window inside the visible area: clear of the
+       notch at the top and of the fixed bottom nav + home indicator below. */
+    .modal-overlay {
+        padding:
+            calc(12px + var(--safe-top))
+            calc(12px + var(--safe-right))
+            calc(var(--bottom-nav-height) + 12px + var(--safe-bottom))
+            calc(12px + var(--safe-left));
+    }
+
+    /* Fit the window to the overlay's content box (dvh-based via the overlay,
+       so dynamic browser bars are handled). 85vh/85dvh kept as the fallback. */
+    .modal-overlay .modal-window {
+        max-height: 85vh;
+        max-height: 85dvh;
+        max-height: 100%;
+        min-height: 0;
+    }
+
+    /* Header & tab bars never shrink away; the content region does. */
+    .modal-window > .modal-header,
+    .modal-window > .forge-tab-bar,
+    .modal-window > .quest-book-header,
+    .modal-window > .quest-book-tabs,
+    .modal-window > .pass-body-tabs {
+        flex: 0 0 auto;
+    }
+    .modal-window > .forge-tab-panel.active,
+    .modal-window > .skill-tree-body,
+    .modal-window > .quest-book-body,
+    .modal-window > .iap-body,
+    .modal-window > .pass-body {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    /* Quest book body used a fixed 65vh cap; let it fill the window instead. */
+    .quest-book-body {
+        max-height: none;
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 14px;
+    }
+
+    /* Tab bars: never wider than the window, scroll sideways if really tight
+       instead of overflowing the modal. */
+    .forge-tab-bar,
+    .quest-book-tabs,
+    .pass-body-tabs {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .forge-tab-bar::-webkit-scrollbar,
+    .quest-book-tabs::-webkit-scrollbar,
+    .pass-body-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .forge-tab-button {
+        min-width: 0;
+        flex: 1 1 auto;
+        white-space: nowrap;
+    }
+
+    /* Small centred notification modals: also scroll internally if tall. */
+    .depth-modal-overlay,
+    .offline-modal-overlay {
+        padding:
+            calc(12px + var(--safe-top))
+            calc(12px + var(--safe-right))
+            calc(var(--bottom-nav-height) + 12px + var(--safe-bottom))
+            calc(12px + var(--safe-left));
+    }
+    .depth-modal,
+    .offline-modal {
+        max-height: 100%;
+        overflow-y: auto;
+    }
+
+    /* The floating BOSSES button would sit on top of any open window. */
+    body:has(.modal-overlay.open) .boss-fab,
+    body:has(.depth-modal-overlay.open) .boss-fab,
+    body:has(.offline-modal-overlay.open) .boss-fab,
+    body:has(.boss-fight-overlay.open) .boss-fab {
+        display: none;
+    }
+
+    /* Boss fight arena: dvh so it tracks the dynamic browser bars, never
+       taller than the visible area; result screen scrolls if loot is long. */
+    .boss-fight-overlay {
+        padding:
+            calc(8px + var(--safe-top))
+            calc(8px + var(--safe-right))
+            calc(8px + var(--safe-bottom))
+            calc(8px + var(--safe-left));
+    }
+    .boss-fight-arena {
+        width: min(100%, 420px);
+        height: min(70vh, 520px);
+        height: min(70dvh, 520px);
+        max-height: 100%;
+    }
+    .boss-fight-result-overlay {
+        overflow-y: auto;
+        justify-content: flex-start;
+        padding: 16px 12px;
+    }
+    .boss-fight-result-overlay > :first-child {
+        margin-top: auto;
+    }
+    .boss-fight-result-overlay > :last-child {
+        margin-bottom: auto;
+    }
+}
+
+
+/* -------------------------------------------------------------------------
+   5. GRIDS & CARDS
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+    /* Auto 1 -> 2 columns: a column is only created if it can be >= the
+       minimum below; min(100%, X) guarantees no horizontal overflow. */
+    .relic-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+        gap: 10px;
+        padding: 10px 12px 16px;
+    }
+    .adv-rune-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
+    }
+    .adv-material-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 100px), 1fr));
+    }
+    .key-inventory-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 100px), 1fr));
+    }
+    .boss-loot-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 84px), 1fr));
+    }
+
+    .relic-card,
+    .adv-rune-card,
+    .adv-material-card,
+    .key-card {
+        min-width: 0;
+    }
+
+    /* Battle Pass / Quests level rows: the 4-column desktop grid needs
+       ~550px, so switch to the stacked layout below 768px (previously 640px,
+       which left 641-768px overflowing). Same stacked layout as before. */
+    .pass-track-header {
+        display: none;
+    }
+    .pass-level-row {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "badge"
+            "free"
+            "premium"
+            "claim";
+        gap: 10px;
+        padding: 14px;
+    }
+    .pass-level-row .pass-level-num {
+        grid-area: badge;
+        justify-self: start;
+    }
+    .pass-reward-slot.free-slot { grid-area: free; }
+    .pass-reward-slot.premium-slot { grid-area: premium; }
+    .pass-claim-cell { grid-area: claim; justify-content: stretch; }
+    .pass-claim-btn { min-width: 100%; }
+    .pass-reward-slot { min-width: 0; }
+
+    .skill-tree-body {
+        padding: 14px;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Boss card: info on top, the two actions underneath, full width. */
+    .boss-card {
+        flex-wrap: wrap;
+        padding: 12px;
+        gap: 10px;
+    }
+    .boss-card-body {
+        flex: 1 1 140px;
+        min-width: 0;
+    }
+    .boss-card-actions {
+        flex: 1 1 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .boss-card-actions > * {
+        flex: 1 1 120px;
+    }
+
+    /* Quest reward text may wrap on narrow cards. */
+    .quest-card-reward {
+        white-space: normal;
+    }
+    .quest-card-bottom .quest-claim-btn {
+        width: 100%;
+    }
+
+    /* Shop helper / AFK cards: buy button already goes full width in
+       style.css; make sure it can also shrink. */
+    .helper-buy-btn {
+        min-width: 0;
+    }
+}
+
+
+/* -------------------------------------------------------------------------
+   6. RESPONSIVE BREAKPOINTS
+   ------------------------------------------------------------------------- */
+
+/* ---- <= 768px: tablets / large phones ---- */
+@media (max-width: 768px) {
+    .modal-header {
+        padding: 12px 14px;
+        gap: 8px;
+    }
+    .modal-header h2 {
+        font-size: clamp(1.05rem, 4.6vw, 1.4rem);
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .modal-subheader {
+        padding: 8px 14px;
+    }
+    .forge-tab-bar {
+        padding: 10px 12px 0;
+        gap: 6px;
+    }
+    .adv-tab-panel {
+        padding: 12px;
+    }
+    .iap-body {
+        padding: 12px;
+    }
+}
+
+/* ---- <= 640px: phones. Fixed top controls get their own row. ---- */
+@media (max-width: 640px) {
+    body {
+        /* The fixed sound toggle (44px tall at top: 16px) used to sit on top
+           of the title; reserve a row for it. */
+        padding-top: calc(64px + var(--safe-top));
+    }
+    #quest-book-button {
+        top: calc(64px + var(--safe-top));
+        right: calc(16px + var(--safe-right));
+    }
+    .daily-login-grid {
+        gap: 8px;
+    }
+}
+
+/* ---- <= 480px: standard / small phones ---- */
+@media (max-width: 480px) {
+    body {
+        padding-right: calc(12px + var(--safe-right));
+        padding-left: calc(12px + var(--safe-left));
+    }
+    .container {
+        gap: 14px;
+    }
+    .stats-panel {
+        padding: clamp(12px, 4vw, 20px);
+    }
+    .depth-indicator {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+    .upgrade-item {
+        padding: 12px;
+    }
+    .upgrade-name {
+        font-size: clamp(0.92rem, 4vw, 1.05rem);
+    }
+    .helper-card {
+        padding: 12px;
+    }
+    .modal-overlay,
+    .depth-modal-overlay,
+    .offline-modal-overlay {
+        padding-left: calc(8px + var(--safe-left));
+        padding-right: calc(8px + var(--safe-right));
+    }
+    .depth-modal,
+    .offline-modal {
+        padding: 22px 16px;
+    }
+    .offline-modal-amount {
+        font-size: clamp(1.3rem, 7vw, 1.8rem);
+    }
+    .forge-tab-button {
+        font-size: clamp(0.72rem, 3.3vw, 0.8rem);
+        padding: 9px 6px;
+    }
+    .adv-recipe-card,
+    .boss-card {
+        padding: 10px;
+    }
+    .skill-tree-body,
+    .relic-grid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* ---- <= 420px: nav keeps its look; sync height token + side insets ---- */
+@media (max-width: 420px) {
+    :root {
+        --bottom-nav-height: 70px;
+    }
+    .bottom-nav {
+        padding-left: calc(4px + var(--safe-left));
+        padding-right: calc(4px + var(--safe-right));
+    }
+}
+
+/* ---- <= 340px: iPhone SE 1st gen / very narrow ---- */
+@media (max-width: 340px) {
+    .bottom-nav {
+        gap: 2px;
+        padding-left: calc(2px + var(--safe-left));
+        padding-right: calc(2px + var(--safe-right));
+    }
+    #coin-count {
+        font-size: clamp(1.6rem, 9vw, 2.2rem);
+    }
+    .daily-login-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .boss-fab-label {
+        font-size: 0.9em;
+    }
+}
+
+
+/* -------------------------------------------------------------------------
+   7. SHORT-HEIGHT & LANDSCAPE
+   ------------------------------------------------------------------------- */
+
+/* ---- <= 700px tall: tighten vertical spacing only ---- */
+@media (max-height: 700px) {
+    .container {
+        gap: 14px;
+    }
+    .stats-panel {
+        padding-top: 14px;
+        padding-bottom: 14px;
+    }
+    .modal-header {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+}
+
+/* ---- <= 500px tall (phones in landscape): compact nav + windows ---- */
+@media (max-height: 500px) {
+    :root {
+        --bottom-nav-height: 54px;
+    }
+    body {
+        padding-bottom: calc(var(--bottom-nav-height) + 64px + var(--safe-bottom));
+    }
+    .bottom-nav {
+        padding-top: 4px;
+        padding-bottom: calc(4px + var(--safe-bottom));
+        gap: 4px;
+    }
+    .nav-tab {
+        min-height: var(--tap-min);
+        padding-top: 3px;
+        padding-bottom: 3px;
+        gap: 1px;
+    }
+    .nav-tab-icon {
+        font-size: 1.05rem;
+    }
+    .nav-tab-label {
+        font-size: 0.5rem;
+    }
+
+    .modal-overlay,
+    .depth-modal-overlay,
+    .offline-modal-overlay {
+        padding-top: calc(6px + var(--safe-top));
+        padding-bottom: calc(var(--bottom-nav-height) + 6px + var(--safe-bottom));
+    }
+    .modal-header {
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+    .modal-subheader {
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+    .forge-tab-bar {
+        padding-top: 6px;
+    }
+    .boss-fight-arena {
+        height: 100%;
+        padding: 14px 14px 16px;
+    }
+    .boss-fab {
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+}
+
+/* Landscape phone wider than 640px: no reserved row for the sound toggle,
+   because the centred 500px column leaves room beside it. */
+@media (min-width: 641px) and (max-height: 500px) {
+    body {
+        padding-top: calc(12px + var(--safe-top));
+    }
+}
